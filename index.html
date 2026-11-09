@@ -154,7 +154,8 @@
   .item-total { font-size: 12px; color: var(--suave); text-align: right; white-space: nowrap; }
   .grupo-dia { margin: 22px 4px 8px; font-family: var(--titulo); font-style: italic; font-weight: 600; font-size: 19px; color: var(--mar-hondo); text-transform: capitalize; }
   #lista .item { background: var(--espuma); border-radius: 20px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; }
-  .hora { width: 42px; flex-shrink: 0; font-size: 14px; font-weight: 600; color: var(--suave); padding-top: 2px; }
+  .hora { width: 44px; flex-shrink: 0; font-size: 14px; font-weight: 600; color: var(--suave); padding-top: 2px; line-height: 1.2; }
+  .hora small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
   .item-cuerpo { flex: 1; min-width: 0; }
   .item-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
   .item-top .prod { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
@@ -415,6 +416,12 @@ function nombreDia(fecha) {
   if (dif === 1) return 'Ayer';
   return f.toLocaleDateString(CONFIG.LOCALE, { weekday: 'long', day: 'numeric', month: 'short' });
 }
+// La hoja guarda la hora en 24 h (HH:mm:ss); en pantalla se muestra en 12 h con AM/PM.
+function hora12(h) {
+  const [hh, mm] = String(h || '').split(':').map(Number);
+  if (isNaN(hh) || isNaN(mm)) return { hora: String(h || ''), ampm: '' };
+  return { hora: `${hh % 12 || 12}:${p2(mm)}`, ampm: hh < 12 ? 'AM' : 'PM' };
+}
 function nuevoId() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
@@ -658,7 +665,7 @@ function renderHistorial() {
       : '';
     html += `
       <div class="item">
-        <div class="hora">${esc(String(r.hora).slice(0, 5))}</div>
+        <div class="hora">${(h => `${esc(h.hora)}<small>${h.ampm}</small>`)(hora12(r.hora))}</div>
         <div class="item-cuerpo">
           <div class="item-top"><span class="prod">${esc(r.producto)}${r.cantidad > 1 ? ` <small>×${r.cantidad}</small>` : ''}</span><span><span class="item-valor">${dinero(valorMostrado)}</span>${subValor}</span></div>
           <div class="item-meta">${etiqueta}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
@@ -743,7 +750,7 @@ $('btn-copiar').addEventListener('click', async () => {
   const totales = calcularTotales();
   const total = todosLosRegistros().reduce((s, r) => s + r.valor, 0);
   const { fecha, hora } = ahora();
-  const texto = [`🏖️ Consumos paseo a Melo (corte ${fecha} ${hora.slice(0, 5)})`, '',
+  const texto = [`🏖️ Consumos paseo a Melo (corte ${fecha} ${(h => h.hora + ' ' + h.ampm)(hora12(hora))})`, '',
     ...totales.map((t, i) => `${['🥇', '🥈', '🥉', '4️⃣'][i]} ${t.emoji} ${t.id}: ${dinero(t.total)} (${t.consumos})`),
     '', `💰 Total: ${dinero(total)}`, '', 'El que pelea paga la cuenta 😌'].join('\n');
   try { await navigator.clipboard.writeText(texto); toast('Resumen copiado'); }
