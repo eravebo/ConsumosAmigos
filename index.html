@@ -246,7 +246,7 @@
   .visor { position: fixed; inset: 0; background: rgba(11,30,36,.94); z-index: 60; display: none; align-items: center; justify-content: center; padding: 20px; }
   .visor.ver { display: flex; }
   .visor img { max-width: 100%; max-height: 80vh; border-radius: 16px; }
-  .visor a { position: absolute; bottom: calc(26px + var(--safe-bottom)); font-weight: 600; color: #fff; }
+  .visor-cerrar { position: absolute; bottom: calc(26px + var(--safe-bottom)); font-size: 14px; font-weight: 600; color: rgba(255,255,255,.7); }
   .aviso { background: #FFE7A8; color: #6b4700; border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-top: 16px; }
   .firma { text-align: center; font-family: var(--titulo); font-style: italic; font-size: 14px; color: var(--suave); padding-bottom: 8px; }
 </style>
@@ -377,7 +377,7 @@
 <!-- Visor de fotos -->
 <div class="visor" id="visor">
   <img id="visor-img" alt="Foto del consumo">
-  <a id="visor-link" target="_blank" rel="noopener">Abrir en Google Drive ↗</a>
+  <span class="visor-cerrar">Toca para cerrar</span>
 </div>
 
 <script>
@@ -748,11 +748,9 @@ $('lista').addEventListener('click', async e => {
 
 function abrirVisor(r) {
   $('visor-img').src = r.pendiente ? r.foto : urlMiniatura(r, 'w1600');
-  const link = $('visor-link');
-  if (r.fotoUrl) { link.href = r.fotoUrl; link.style.display = ''; } else link.style.display = 'none';
   $('visor').classList.add('ver');
 }
-$('visor').addEventListener('click', e => { if (e.target.id !== 'visor-link') $('visor').classList.remove('ver'); });
+$('visor').addEventListener('click', () => $('visor').classList.remove('ver'));
 
 /* ============================================================
    Ranking 🏆
