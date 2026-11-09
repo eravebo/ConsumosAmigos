@@ -702,7 +702,8 @@ function renderHistorial() {
     const etiqueta = esComp
       ? `<span class="tag-comp">Compartido entre ${r.personas.length}</span>`
       : `<span>${esTodos ? 'Solo ' + esc(r.personas[0]) + ' ' + (EMOJI[r.personas[0]] || '') : 'Solo suyo'}</span>`;
-    const desglose = esComp
+    // En "Todos" se ve cuánto le toca a cada uno; filtrando por persona, solo su parte (va en el valor grande).
+    const desglose = (esComp && esTodos)
       ? `<div class="desglose">${r.personas.map(p => `<span class="cuota ${p === filtro ? 'yo' : ''}">${EMOJI[p] || '👤'} ${esc(p)} ${dinero(r.valorPorPersona)}</span>`).join('')}</div>`
       : '';
     html += `
