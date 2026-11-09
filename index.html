@@ -5,260 +5,283 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Gastos Melo">
-<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Melo">
+<meta name="theme-color" content="#141414">
+<meta name="color-scheme" content="dark">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
-<title>Gastos viaje a Melo</title>
+<link rel="preload" href="fonts/BarlowCondensed-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
+<title>Melo · Consumos</title>
 <style>
+  /* Identidad Seven Travel: asfalto, rojo, tiza y línea vial. Barlow = señalización vial. */
+  @font-face { font-family: "Barlow Condensed"; src: url("fonts/BarlowCondensed-ExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+  @font-face { font-family: "Barlow Condensed"; src: url("fonts/BarlowCondensed-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Barlow"; src: url("fonts/Barlow-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Barlow"; src: url("fonts/Barlow-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+
   :root {
-    --bg: #f4f1ea;
-    --card: #ffffff;
-    --text: #1d2a2a;
-    --muted: #6b7774;
-    --line: #e4ded2;
-    --primary: #0f766e;
-    --primary-ink: #ffffff;
-    --soft: #e6f2ef;
-    --danger: #c2410c;
-    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
-    --radius: 18px;
+    --asfalto: #141414;
+    --asfalto-2: #1B1B1B;
+    --via: #2A2A2A;
+    --rojo: #E10600;
+    --rojo-texto: #FF5A4E;
+    --tiza: #F4F4F0;
+    --niebla: #A8A8A3;
+    --linea-vial: #F2B705;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "Barlow", -apple-system, system-ui, sans-serif;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #121716;
-      --card: #1c2422;
-      --text: #ecf2f0;
-      --muted: #94a3a0;
-      --line: #2b3633;
-      --primary: #2bb3a3;
-      --primary-ink: #06201d;
-      --soft: #1f3330;
-      --danger: #fb923c;
-      --shadow: none;
-    }
+    --lado: 20px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  html, body { margin: 0; background: var(--asfalto); color: var(--tiza); }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.4;
+    font-family: var(--body); font-size: 16px; line-height: 1.45;
     padding-top: var(--safe-top);
-    padding-bottom: calc(78px + var(--safe-bottom));
+    padding-bottom: calc(70px + var(--safe-bottom));
     -webkit-font-smoothing: antialiased;
   }
   button, input, textarea { font: inherit; color: inherit; }
-  button { cursor: pointer; border: 0; background: none; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  [hidden] { display: none !important; }
+
+  .cond { font-family: var(--display); text-transform: uppercase; }
+  .label {
+    display: block; font-family: var(--display); font-weight: 600; font-size: 14px;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--niebla); margin: 0 0 8px;
+  }
+  /* Línea amarilla discontinua de carretera */
+  .linea {
+    height: 3px; margin: 0;
+    background: repeating-linear-gradient(90deg, var(--linea-vial) 0 22px, transparent 22px 38px);
+    opacity: .9;
+  }
 
   /* ---------- Encabezado ---------- */
   .topbar {
-    position: sticky; top: 0; z-index: 10;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    padding: 12px 18px 10px;
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10; background: var(--asfalto);
+    padding: 14px var(--lado) 0;
   }
-  .topbar h1 { margin: 0; font-size: 21px; letter-spacing: -.3px; }
-  .topbar small { color: var(--muted); font-size: 13px; }
-  .top-actions { display: flex; gap: 8px; align-items: center; }
-  .pill {
-    font-size: 13px; padding: 6px 11px; border-radius: 999px;
-    background: var(--soft); color: var(--primary); font-weight: 600; white-space: nowrap;
+  .topbar-fila { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 12px; }
+  .marca { font-family: var(--display); font-weight: 800; font-size: 44px; line-height: .9; letter-spacing: -.01em; text-transform: uppercase; margin: 0; }
+  .marca span { color: var(--rojo); }
+  .sub { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--niebla); margin-top: 4px; }
+  .estado {
+    font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--niebla); display: flex; align-items: center; gap: 7px; padding: 6px 0;
   }
-  .pill.warn { background: #fde7d6; color: #9a3412; }
+  .estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3ecf6e; }
+  .estado.pend { color: var(--linea-vial); }
+  .estado.pend::before { background: var(--linea-vial); }
+  .estado.envio::before { background: var(--niebla); animation: parpadeo 1s infinite; }
+  @keyframes parpadeo { 50% { opacity: .2; } }
 
-  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+  main { max-width: 560px; margin: 0 auto; padding: 0 var(--lado); }
   .vista { display: none; }
-  .vista.activa { display: block; animation: aparecer .18s ease-out; }
-  @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .vista.activa { display: block; animation: entrar .35s var(--ease); }
+  @keyframes entrar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-  .card {
-    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: 16px; margin-bottom: 14px;
-  }
-  .label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .4px; }
-  .campo { margin-bottom: 16px; }
-  .campo:last-child { margin-bottom: 0; }
+  .bloque { padding: 22px 0; border-bottom: 1px solid var(--via); }
+  .bloque:last-of-type { border-bottom: 0; }
+
   input[type=text], textarea {
-    width: 100%; border: 1.5px solid var(--line); background: var(--bg);
-    border-radius: 13px; padding: 13px 14px; font-size: 17px; outline: none;
-    -webkit-appearance: none; appearance: none;
+    width: 100%; border: 1.5px solid transparent; background: var(--asfalto-2);
+    border-radius: 12px; padding: 14px; font-size: 17px; outline: none;
+    -webkit-appearance: none; appearance: none; transition: border-color .2s;
   }
-  input[type=text]:focus, textarea:focus { border-color: var(--primary); }
-  textarea { min-height: 72px; resize: vertical; }
+  input[type=text]:focus, textarea:focus { border-color: var(--tiza); }
+  input::placeholder, textarea::placeholder { color: #6b6b67; }
+  textarea { min-height: 70px; resize: vertical; }
 
-  .fila { display: flex; gap: 12px; }
-  .fila > .campo { flex: 1; min-width: 0; }
-  .valor-wrap { position: relative; }
-  .valor-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 17px; }
-  .valor-wrap input { padding-left: 28px; font-weight: 600; }
-
-  .stepper { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 13px; background: var(--bg); height: 50px; }
-  .stepper button { width: 44px; height: 100%; font-size: 22px; color: var(--primary); }
-  .stepper output { flex: 1; text-align: center; font-weight: 700; font-size: 18px; }
+  /* Valor: el número es protagonista */
+  .valor-fila { display: flex; gap: 14px; align-items: flex-end; margin-top: 18px; }
+  .valor-wrap { flex: 1; min-width: 0; display: flex; align-items: baseline; border-bottom: 2px solid var(--via); transition: border-color .2s; }
+  .valor-wrap:focus-within { border-color: var(--rojo); }
+  .valor-wrap span { font-family: var(--display); font-weight: 800; font-size: 34px; color: var(--niebla); margin-right: 4px; }
+  .valor-wrap input {
+    background: none !important; border: 0 !important; padding: 0 0 4px !important; border-radius: 0 !important;
+    font-family: var(--display); font-weight: 800; font-size: 46px !important; line-height: 1.1; letter-spacing: -.01em;
+  }
+  .stepper { display: flex; align-items: center; background: var(--asfalto-2); border-radius: 12px; height: 52px; }
+  .stepper button { width: 42px; height: 100%; font-size: 24px; color: var(--niebla); }
+  .stepper output { min-width: 26px; text-align: center; font-family: var(--display); font-weight: 800; font-size: 24px; }
+  .x { font-family: var(--display); font-weight: 600; text-transform: uppercase; color: var(--niebla); font-size: 13px; letter-spacing: .1em; text-align: center; margin-bottom: 6px; }
 
   /* Personas */
-  .personas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .persona {
-    display: flex; align-items: center; gap: 10px; padding: 12px;
-    border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg);
-    font-weight: 600; text-align: left; transition: transform .1s, background .15s, border-color .15s;
-  }
-  .persona:active { transform: scale(.97); }
-  .persona .emoji { font-size: 26px; line-height: 1; }
-  .persona.sel { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--card)); }
-  .persona .check { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 13px; color: #fff; }
-  .persona.sel .check { background: var(--c); border-color: var(--c); }
-  .todos-btn { font-size: 14px; color: var(--primary); font-weight: 600; padding: 2px 0; }
   .label-fila { display: flex; justify-content: space-between; align-items: baseline; }
-  .reparto { margin-top: 10px; font-size: 14px; color: var(--muted); min-height: 20px; }
-  .reparto b { color: var(--text); }
+  .todos-btn { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: var(--tiza); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--rojo); }
+  .personas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .persona {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px 11px;
+    border-radius: 14px; background: var(--asfalto-2); border: 1.5px solid transparent;
+    transition: transform .15s var(--ease), background .2s, border-color .2s;
+  }
+  .persona:active { transform: scale(.95); }
+  .persona .emoji { font-size: 28px; line-height: 1; }
+  .persona .nom { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--niebla); }
+  .persona.sel { background: var(--rojo); border-color: var(--rojo); }
+  .persona.sel .nom { color: #fff; }
+  .reparto { margin-top: 12px; font-size: 15px; color: var(--niebla); min-height: 21px; }
+  .reparto b { color: var(--tiza); font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: .01em; }
 
   /* Foto */
   .foto-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 14px; border-radius: 13px; border: 1.5px dashed var(--line);
-    background: var(--bg); color: var(--muted); font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 15px;
+    border-radius: 12px; border: 1.5px dashed #3a3a3a; color: var(--niebla);
+    font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .08em; text-transform: uppercase;
   }
+  .foto-btn svg { width: 20px; height: 20px; }
   .foto-preview { position: relative; display: none; }
-  .foto-preview img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 13px; display: block; }
-  .foto-preview button {
-    position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,.6); color: #fff; font-size: 16px;
-  }
+  .foto-preview img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; display: block; }
+  .foto-preview button { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; border-radius: 50%; background: rgba(20,20,20,.75); color: #fff; font-size: 15px; }
+  .campo + .campo { margin-top: 18px; }
 
   .btn-principal {
-    width: 100%; padding: 16px; border-radius: 15px; font-size: 17px; font-weight: 700;
-    background: var(--primary); color: var(--primary-ink);
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 30%, transparent);
+    width: 100%; padding: 17px; border-radius: 12px; margin: 6px 0 26px;
+    background: var(--rojo); color: #fff;
+    font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .06em; text-transform: uppercase;
+    transition: transform .15s var(--ease), opacity .2s;
   }
-  .btn-principal:disabled { opacity: .55; }
-  .btn-sec { padding: 10px 14px; border-radius: 12px; background: var(--soft); color: var(--primary); font-weight: 600; font-size: 15px; }
+  .btn-principal:active { transform: scale(.98); }
+  .btn-principal:disabled { opacity: .5; }
+  .btn-borde {
+    width: 100%; padding: 14px; border-radius: 12px; border: 1.5px solid var(--via);
+    font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; margin: 18px 0 26px;
+  }
 
   /* Historial */
-  .filtros { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
+  .filtros { display: flex; gap: 8px; overflow-x: auto; padding: 18px 0 4px; scrollbar-width: none; }
   .filtros::-webkit-scrollbar { display: none; }
-  .chip { padding: 8px 13px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow); white-space: nowrap; font-size: 15px; font-weight: 600; }
-  .chip.sel { background: var(--primary); color: var(--primary-ink); }
-  .resumen-filtro { font-size: 14px; color: var(--muted); margin: 0 4px 10px; }
-  .item { display: flex; gap: 12px; align-items: flex-start; }
-  .thumb { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: var(--soft); }
-  .thumb-vacio { width: 64px; height: 64px; border-radius: 12px; flex-shrink: 0; background: var(--soft); display: grid; place-items: center; font-size: 26px; }
+  .chip {
+    padding: 8px 14px; border-radius: 999px; background: var(--asfalto-2); white-space: nowrap;
+    font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--niebla);
+  }
+  .chip.sel { background: var(--tiza); color: var(--asfalto); }
+  .resumen-filtro { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 0; color: var(--niebla); font-size: 15px; }
+  .resumen-filtro b { font-family: var(--display); font-weight: 800; font-size: 26px; color: var(--tiza); }
+  .grupo-dia { display: flex; align-items: center; gap: 12px; margin: 22px 0 4px; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--linea-vial); }
+  .grupo-dia::after { content: ""; flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--linea-vial) 0 12px, transparent 12px 20px); opacity: .5; }
+  .item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--via); }
+  .item:last-child { border-bottom: 0; }
+  .hora { width: 42px; flex-shrink: 0; font-family: var(--display); font-weight: 600; font-size: 15px; color: var(--niebla); padding-top: 2px; }
   .item-cuerpo { flex: 1; min-width: 0; }
-  .item-top { display: flex; justify-content: space-between; gap: 8px; }
-  .item-top b { font-size: 16px; overflow-wrap: anywhere; }
-  .item-valor { font-weight: 700; white-space: nowrap; }
-  .item-meta { font-size: 13px; color: var(--muted); margin-top: 3px; }
-  .item-nota { font-size: 14px; margin-top: 6px; padding: 7px 10px; background: var(--bg); border-radius: 9px; overflow-wrap: anywhere; }
-  .item-pie { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
-  .item-quien { font-size: 20px; letter-spacing: 2px; }
-  .borrar { font-size: 13px; color: var(--danger); font-weight: 600; padding: 4px 0; }
-  .etiqueta-pend { font-size: 12px; background: #fde7d6; color: #9a3412; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
-  .grupo-dia { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin: 18px 4px 8px; }
-  .vacio { text-align: center; color: var(--muted); padding: 40px 20px; }
-  .vacio div { font-size: 42px; margin-bottom: 8px; }
+  .item-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .item-top .prod { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+  .item-top .prod small { color: var(--niebla); font-weight: 400; }
+  .item-valor { font-family: var(--display); font-weight: 800; font-size: 21px; white-space: nowrap; }
+  .item-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 14px; color: var(--niebla); flex-wrap: wrap; }
+  .quien { font-size: 17px; letter-spacing: 1px; }
+  .item-nota { font-size: 14px; color: var(--niebla); margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--rojo); overflow-wrap: anywhere; }
+  .item-pie { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; gap: 10px; }
+  .item-pie:has(> .borrar:only-child) { margin-top: 0; }
+  .thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; display: block; background: var(--asfalto-2); }
+  .thumb-btn { flex-shrink: 0; }
+  .borrar { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--rojo-texto); padding: 4px 0; margin-left: auto; }
+  .pend-tag { font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--asfalto); background: var(--linea-vial); padding: 1px 7px; border-radius: 4px; }
+  .vacio { text-align: center; color: var(--niebla); padding: 60px 20px; }
+  .vacio .cond { font-weight: 800; font-size: 26px; color: var(--tiza); margin-bottom: 6px; }
 
   /* Ranking */
-  .total-viaje { text-align: center; }
-  .total-viaje .num { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 4px 0; }
-  .stats { display: flex; justify-content: center; gap: 18px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
-  .rank { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .rank:last-child { border-bottom: 0; padding-bottom: 0; }
-  .rank:first-child { padding-top: 0; }
-  .medalla { width: 34px; text-align: center; font-size: 26px; flex-shrink: 0; }
-  .rank-cuerpo { flex: 1; min-width: 0; }
-  .rank-nombre { display: flex; justify-content: space-between; font-weight: 700; gap: 8px; }
-  .barra { height: 9px; background: var(--bg); border-radius: 99px; overflow: hidden; margin: 7px 0 4px; }
-  .barra i { display: block; height: 100%; border-radius: 99px; background: var(--c); transition: width .5s ease; }
-  .rank-meta { font-size: 13px; color: var(--muted); }
-  .rey { text-align: center; font-size: 15px; }
-  .rey .grande { font-size: 44px; line-height: 1.1; }
-
-  /* Barra de pestañas */
-  .tabbar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    display: flex; justify-content: space-around;
-    padding: 6px 8px calc(6px + var(--safe-bottom));
-    background: color-mix(in srgb, var(--card) 92%, transparent);
-    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-    border-top: 1px solid var(--line);
+  .total { padding: 24px 0 20px; }
+  .total .num { font-family: var(--display); font-weight: 800; font-size: 64px; line-height: .95; letter-spacing: -.01em; }
+  .stats { display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+  .stat { font-size: 14px; color: var(--niebla); }
+  .stat b { display: block; font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--tiza); line-height: 1.1; }
+  .rank { display: flex; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--via); }
+  .rank:last-child { border-bottom: 0; }
+  .placa {
+    width: 46px; height: 46px; flex-shrink: 0; border-radius: 10px; display: grid; place-items: center;
+    font-family: var(--display); font-weight: 800; font-size: 24px; background: var(--asfalto-2); color: var(--niebla);
   }
-  .tab { flex: 1; max-width: 140px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; font-size: 11px; font-weight: 600; color: var(--muted); }
-  .tab .ico { font-size: 23px; line-height: 1.1; filter: grayscale(1); opacity: .65; }
-  .tab.activa { color: var(--primary); }
-  .tab.activa .ico { filter: none; opacity: 1; }
+  .rank.lider .placa { background: var(--linea-vial); color: var(--asfalto); }
+  .rank-cuerpo { flex: 1; min-width: 0; }
+  .rank-nombre { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .rank-nombre .n { font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; }
+  .rank-nombre .v { font-family: var(--display); font-weight: 800; font-size: 22px; }
+  .barra { height: 6px; background: var(--asfalto-2); border-radius: 99px; overflow: hidden; margin: 8px 0 5px; }
+  .barra i { display: block; height: 100%; border-radius: 99px; background: var(--niebla); transition: width .8s var(--ease); }
+  .rank.lider .barra i { background: var(--rojo); }
+  .rank-meta { font-size: 13px; color: var(--niebla); }
 
-  /* Toast, modales y visor */
+  /* Barra inferior */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex;
+    padding: 0 8px var(--safe-bottom); background: var(--asfalto); border-top: 1px solid var(--via);
+  }
+  .tab {
+    flex: 1; padding: 16px 0 14px; position: relative;
+    font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .1em; text-transform: uppercase; color: #6b6b67;
+    transition: color .2s;
+  }
+  .tab::before { content: ""; position: absolute; top: -1px; left: 28%; right: 28%; height: 3px; background: var(--rojo); border-radius: 0 0 3px 3px; transform: scaleX(0); transition: transform .3s var(--ease); }
+  .tab.activa { color: var(--tiza); }
+  .tab.activa::before { transform: scaleX(1); }
+
+  /* Toast, modal y visor */
   .toast {
-    position: fixed; left: 50%; bottom: calc(92px + var(--safe-bottom)); transform: translate(-50%, 20px);
-    background: #1d2a2a; color: #fff; padding: 11px 18px; border-radius: 14px; font-size: 15px;
-    opacity: 0; pointer-events: none; transition: all .25s; z-index: 50; max-width: 90vw; text-align: center;
+    position: fixed; left: 50%; bottom: calc(84px + var(--safe-bottom)); transform: translate(-50%, 16px);
+    background: var(--tiza); color: var(--asfalto); padding: 11px 18px; border-radius: 12px;
+    font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .04em; text-transform: uppercase;
+    opacity: 0; pointer-events: none; transition: all .3s var(--ease); z-index: 50; max-width: 90vw; text-align: center;
   }
   .toast.ver { opacity: 1; transform: translate(-50%, 0); }
-  .velo {
-    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40;
-    display: none; align-items: flex-end; justify-content: center;
-  }
+  .velo { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 40; display: none; align-items: flex-end; justify-content: center; }
   .velo.ver { display: flex; }
-  .hoja {
-    background: var(--card); width: 100%; max-width: 560px; border-radius: 22px 22px 0 0;
-    padding: 22px 18px calc(18px + var(--safe-bottom)); animation: subir .22s ease-out;
-  }
-  @keyframes subir { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
-  .hoja h2 { margin: 0 0 6px; font-size: 20px; }
-  .hoja p { margin: 0 0 16px; color: var(--muted); }
-  .hoja .botones { display: flex; gap: 10px; margin-top: 16px; }
-  .hoja .botones button { flex: 1; padding: 14px; border-radius: 13px; font-weight: 700; }
-  .btn-cancelar { background: var(--bg); }
-  .btn-peligro { background: var(--danger); color: #fff; }
-  .visor { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 60; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .hoja { background: var(--asfalto-2); width: 100%; max-width: 560px; border-radius: 22px 22px 0 0; padding: 24px var(--lado) calc(18px + var(--safe-bottom)); animation: subir .3s var(--ease); }
+  @keyframes subir { from { transform: translateY(40px); opacity: .5; } to { transform: none; opacity: 1; } }
+  .hoja h2 { margin: 0 0 6px; font-family: var(--display); font-weight: 800; font-size: 28px; text-transform: uppercase; }
+  .hoja p { margin: 0; color: var(--niebla); }
+  .hoja .botones { display: flex; gap: 10px; margin-top: 20px; }
+  .hoja .botones button { flex: 1; padding: 15px; border-radius: 12px; font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; }
+  .btn-cancelar { background: var(--via); }
+  .btn-peligro { background: var(--rojo); color: #fff; }
+  .visor { position: fixed; inset: 0; background: rgba(0,0,0,.94); z-index: 60; display: none; align-items: center; justify-content: center; padding: 20px; }
   .visor.ver { display: flex; }
   .visor img { max-width: 100%; max-height: 80vh; border-radius: 12px; }
-  .visor a { position: absolute; bottom: calc(24px + var(--safe-bottom)); color: #fff; font-weight: 600; }
-  .aviso { background: #fde7d6; color: #7c2d12; border-radius: 14px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
+  .visor a { position: absolute; bottom: calc(26px + var(--safe-bottom)); font-family: var(--display); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tiza); }
+  .aviso { background: var(--linea-vial); color: var(--asfalto); border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-top: 16px; }
+  .firma { text-align: center; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #4a4a47; padding-bottom: 8px; }
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div>
-    <h1>Viaje a Melo 🧳</h1>
-    <small>Control de consumos del hotel</small>
+  <div class="topbar-fila">
+    <div>
+      <h1 class="marca">Melo<span>.</span></h1>
+      <div class="sub">Consumos del hotel</div>
+    </div>
+    <button id="estado-sync" class="estado">Al día</button>
   </div>
-  <div class="top-actions">
-    <button id="estado-sync" class="pill" title="Sincronizar">✓ Al día</button>
-  </div>
+  <div class="linea"></div>
 </header>
 
 <main>
   <div id="aviso-config" class="aviso" hidden>
-    Falta configurar la dirección de la API. Abre <b>index.html</b> y pega la URL de Apps Script en <b>CONFIG.API_URL</b>.
+    Falta la URL de la API en <b>CONFIG.API_URL</b> dentro de index.html.
   </div>
 
   <!-- ================= REGISTRAR ================= -->
   <section id="vista-registrar" class="vista activa">
     <form id="form" autocomplete="off" novalidate>
-      <div class="card">
-        <div class="campo">
-          <label class="label" for="producto">Producto</label>
-          <input type="text" id="producto" list="sugerencias" placeholder="Ej: Cerveza, almuerzo, toalla extra…" enterkeyhint="next" maxlength="80">
-          <datalist id="sugerencias"></datalist>
-        </div>
-        <div class="fila">
-          <div class="campo" style="flex:1.4">
+      <div class="bloque">
+        <label class="label" for="producto">Producto</label>
+        <input type="text" id="producto" list="sugerencias" placeholder="Cerveza, almuerzo, toalla extra…" enterkeyhint="next" maxlength="80">
+        <datalist id="sugerencias"></datalist>
+
+        <div class="valor-fila">
+          <div style="flex:1;min-width:0">
             <label class="label" for="valor">Valor total</label>
             <div class="valor-wrap">
               <span>$</span>
               <input type="text" id="valor" inputmode="numeric" placeholder="0" enterkeyhint="done">
             </div>
           </div>
-          <div class="campo">
-            <label class="label">Cantidad</label>
+          <div>
+            <div class="x">Cant.</div>
             <div class="stepper">
               <button type="button" id="menos" aria-label="Menos">−</button>
               <output id="cantidad">1</output>
@@ -268,23 +291,25 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="bloque">
         <div class="label-fila">
-          <span class="label">¿Quién consume?</span>
+          <span class="label">Quién consume</span>
           <button type="button" class="todos-btn" id="btn-todos">Todos</button>
         </div>
         <div class="personas" id="personas"></div>
         <div class="reparto" id="reparto"></div>
       </div>
 
-      <div class="card">
+      <div class="bloque">
         <div class="campo">
-          <label class="label" for="nota">Nota (opcional)</label>
-          <textarea id="nota" placeholder="Ej: lo pedimos a la habitación, el mesero dijo que era cortesía…" maxlength="300"></textarea>
+          <label class="label" for="nota">Nota</label>
+          <textarea id="nota" placeholder="Opcional. Ej: pedido a la habitación, dijeron que era cortesía…" maxlength="300"></textarea>
         </div>
         <div class="campo">
-          <span class="label">Foto (opcional)</span>
-          <label class="foto-btn" id="foto-btn" for="foto">📷 Tomar o elegir foto</label>
+          <label class="foto-btn" id="foto-btn" for="foto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <span>Adjuntar foto</span>
+          </label>
           <input type="file" id="foto" accept="image/*" hidden>
           <div class="foto-preview" id="foto-preview">
             <img id="foto-img" alt="Vista previa">
@@ -294,6 +319,7 @@
       </div>
 
       <button type="submit" class="btn-principal" id="btn-guardar">Guardar consumo</button>
+      <div class="firma">Seven Travel · ruta Melo</div>
     </form>
   </section>
 
@@ -306,21 +332,21 @@
 
   <!-- ================= RANKING ================= -->
   <section id="vista-ranking" class="vista">
-    <div class="card total-viaje">
-      <span class="label">Total consumido en el viaje</span>
+    <div class="total">
+      <span class="label">Total del viaje</span>
       <div class="num" id="total-viaje">$0</div>
       <div class="stats" id="stats"></div>
     </div>
-    <div class="card rey" id="rey"></div>
-    <div class="card" id="ranking"></div>
-    <button class="btn-sec" id="btn-copiar" style="width:100%">📋 Copiar resumen para WhatsApp</button>
+    <div class="linea"></div>
+    <div id="ranking"></div>
+    <button class="btn-borde" id="btn-copiar">Copiar resumen para WhatsApp</button>
   </section>
 </main>
 
 <nav class="tabbar">
-  <button class="tab activa" data-vista="registrar"><span class="ico">➕</span>Registrar</button>
-  <button class="tab" data-vista="historial"><span class="ico">🧾</span>Historial</button>
-  <button class="tab" data-vista="ranking"><span class="ico">🏆</span>Ranking</button>
+  <button class="tab activa" data-vista="registrar">Registrar</button>
+  <button class="tab" data-vista="historial">Historial</button>
+  <button class="tab" data-vista="ranking">Ranking</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -437,7 +463,7 @@ async function cargarRegistros(silencioso = false) {
   if (!apiConfigurada()) return;
   try {
     const j = await apiGet({ accion: 'listar' });
-    if (!j.ok) { if (!silencioso) toast('⚠️ ' + j.error); return; }
+    if (!j.ok) { if (!silencioso) toast(j.error); return; }
     registros = j.datos;
     lsGuardar('melo_cache', registros);
     renderTodo();
@@ -461,15 +487,15 @@ async function sincronizar() {
   }
   sincronizando = false;
   actualizarEstado();
-  if (errorServidor) toast('⚠️ ' + errorServidor, 4000);
+  if (errorServidor) toast(errorServidor, 4000);
   await cargarRegistros(true);
 }
 
 function actualizarEstado() {
   const b = $('estado-sync');
-  if (sincronizando) { b.textContent = '↻ Enviando…'; b.className = 'pill'; }
-  else if (pendientes.length) { b.textContent = `⏳ ${pendientes.length} pendiente${pendientes.length > 1 ? 's' : ''}`; b.className = 'pill warn'; }
-  else { b.textContent = '✓ Al día'; b.className = 'pill'; }
+  if (sincronizando) { b.textContent = 'Enviando'; b.className = 'estado envio'; }
+  else if (pendientes.length) { b.textContent = `${pendientes.length} sin enviar`; b.className = 'estado pend'; }
+  else { b.textContent = 'Al día'; b.className = 'estado'; }
 }
 
 /* ============================================================
@@ -477,8 +503,8 @@ function actualizarEstado() {
    ============================================================ */
 function renderPersonas() {
   $('personas').innerHTML = PERSONAS.map(p => `
-    <button type="button" class="persona ${seleccion.has(p.id) ? 'sel' : ''}" data-id="${p.id}" style="--c:${p.color}">
-      <span class="emoji">${p.emoji}</span>${p.id}<span class="check">${seleccion.has(p.id) ? '✓' : ''}</span>
+    <button type="button" class="persona ${seleccion.has(p.id) ? 'sel' : ''}" data-id="${p.id}" aria-pressed="${seleccion.has(p.id)}">
+      <span class="emoji">${p.emoji}</span><span class="nom">${p.id}</span>
     </button>`).join('');
   $('btn-todos').textContent = seleccion.size === PERSONAS.length ? 'Ninguno' : 'Todos';
   renderReparto();
@@ -486,9 +512,9 @@ function renderPersonas() {
 function valorActual() { return Number($('valor').value.replace(/\D/g, '')) || 0; }
 function renderReparto() {
   const v = valorActual(), n = seleccion.size;
-  if (n > 1 && v > 0) $('reparto').innerHTML = `Se divide entre ${n}: <b>${dinero(v / n)}</b> c/u`;
-  else if (n === 1 && v > 0) $('reparto').innerHTML = `Todo para ${EMOJI[[...seleccion][0]]} <b>${[...seleccion][0]}</b>`;
-  else $('reparto').textContent = 'Puedes elegir varias personas si lo compartieron.';
+  if (n > 1 && v > 0) $('reparto').innerHTML = `Entre ${n}: <b>${dinero(v / n)}</b> cada uno`;
+  else if (n === 1 && v > 0) $('reparto').innerHTML = `Todo para ${[...seleccion][0]}: <b>${dinero(v)}</b>`;
+  else $('reparto').textContent = 'Si lo compartieron, elige a varios y se divide.';
 }
 
 $('personas').addEventListener('click', e => {
@@ -530,13 +556,13 @@ function comprimirImagen(archivo, maxLado = 1280, calidad = 0.72) {
 $('foto').addEventListener('change', async e => {
   const archivo = e.target.files[0]; if (!archivo) return;
   try {
-    $('foto-btn').textContent = 'Procesando foto…';
+    $('foto-btn').querySelector('span').textContent = 'Procesando…';
     fotoDataUrl = await comprimirImagen(archivo);
     $('foto-img').src = fotoDataUrl;
     $('foto-preview').style.display = 'block';
     $('foto-btn').style.display = 'none';
   } catch (err) { toast('No se pudo cargar la foto'); }
-  finally { $('foto-btn').textContent = '📷 Tomar o elegir foto'; e.target.value = ''; }
+  finally { $('foto-btn').querySelector('span').textContent = 'Adjuntar foto'; e.target.value = ''; }
 });
 $('quitar-foto').addEventListener('click', quitarFoto);
 function quitarFoto() {
@@ -569,10 +595,10 @@ $('form').addEventListener('submit', async e => {
   seleccion = new Set(); renderPersonas(); quitarFoto();
   document.activeElement?.blur();
 
-  toast(navigator.onLine ? '✅ Guardando en Google Sheets…' : '📴 Guardado. Se enviará cuando haya internet');
+  toast(navigator.onLine ? 'Guardando…' : 'Sin internet: se enviará luego');
   renderTodo();
   await sincronizar();
-  if (!pendientes.find(p => p.id === reg.id)) toast('✅ Guardado en Google Sheets');
+  if (!pendientes.find(p => p.id === reg.id)) toast('Guardado en la hoja');
 });
 
 /* ============================================================
@@ -588,9 +614,9 @@ function urlMiniatura(r, tam = 'w300') {
 }
 
 function renderFiltros() {
-  const opciones = [{ id: 'Todos', emoji: '👥' }, ...PERSONAS];
+  const opciones = [{ id: 'Todos', emoji: '' }, ...PERSONAS];
   $('filtros').innerHTML = opciones.map(o =>
-    `<button class="chip ${filtro === o.id ? 'sel' : ''}" data-f="${o.id}">${o.emoji} ${o.id}</button>`).join('');
+    `<button class="chip ${filtro === o.id ? 'sel' : ''}" data-f="${o.id}">${o.emoji ? o.emoji + ' ' : ''}${o.id}</button>`).join('');
 }
 $('filtros').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
@@ -602,33 +628,30 @@ function renderHistorial() {
   const lista = todosLosRegistros().filter(r => filtro === 'Todos' || r.personas.includes(filtro));
 
   if (!lista.length) {
-    $('resumen-filtro').textContent = '';
-    $('lista').innerHTML = `<div class="vacio"><div>🧾</div>Todavía no hay consumos${filtro !== 'Todos' ? ' de ' + esc(filtro) : ''}.</div>`;
+    $('resumen-filtro').innerHTML = '';
+    $('lista').innerHTML = `<div class="vacio"><div class="cond">Sin consumos</div>${filtro !== 'Todos' ? esc(filtro) + ' no ha registrado nada todavía.' : 'Lo que registren aparecerá aquí.'}</div>`;
     return;
   }
 
   const total = lista.reduce((s, r) => s + (filtro === 'Todos' ? r.valor : r.valorPorPersona), 0);
-  $('resumen-filtro').innerHTML = `${lista.length} consumo${lista.length > 1 ? 's' : ''} · ${filtro === 'Todos' ? 'total' : 'le corresponde'} <b>${dinero(total)}</b>`;
+  $('resumen-filtro').innerHTML = `<span>${lista.length} consumo${lista.length > 1 ? 's' : ''}${filtro === 'Todos' ? '' : ' · le corresponde'}</span><b>${dinero(total)}</b>`;
 
   let html = '', diaActual = '';
   for (const r of lista) {
     if (r.fecha !== diaActual) { diaActual = r.fecha; html += `<div class="grupo-dia">${esc(nombreDia(r.fecha))}</div>`; }
     const mini = urlMiniatura(r);
     const foto = mini
-      ? `<img class="thumb" src="${esc(mini)}" loading="lazy" data-ver="${esc(r.id)}" alt="Foto" onerror="this.outerHTML='<div class=&quot;thumb-vacio&quot;>🖼️</div>'">`
-      : `<div class="thumb-vacio">🍽️</div>`;
-    const reparto = r.personas.length > 1 ? ` · ${dinero(r.valorPorPersona)} c/u` : '';
+      ? `<button class="thumb-btn" data-ver="${esc(r.id)}" aria-label="Ver foto"><img class="thumb" src="${esc(mini)}" loading="lazy" alt="" onerror="this.parentNode.remove()"></button>`
+      : '';
+    const reparto = r.personas.length > 1 ? `<span>${dinero(r.valorPorPersona)} c/u</span>` : '';
     html += `
-      <div class="card item">
-        ${foto}
+      <div class="item">
+        <div class="hora">${esc(String(r.hora).slice(0, 5))}</div>
         <div class="item-cuerpo">
-          <div class="item-top"><b>${esc(r.producto)}${r.cantidad > 1 ? ` ×${r.cantidad}` : ''}</b><span class="item-valor">${dinero(r.valor)}</span></div>
-          <div class="item-meta">${esc(String(r.hora).slice(0, 5))}${reparto} ${r.pendiente ? '<span class="etiqueta-pend">⏳ sin enviar</span>' : ''}</div>
-          ${r.nota ? `<div class="item-nota">📝 ${esc(r.nota)}</div>` : ''}
-          <div class="item-pie">
-            <span class="item-quien" title="${esc(r.personas.join(', '))}">${r.personas.map(p => EMOJI[p] || '👤').join('')}</span>
-            <button class="borrar" data-borrar="${esc(r.id)}">Eliminar</button>
-          </div>
+          <div class="item-top"><span class="prod">${esc(r.producto)}${r.cantidad > 1 ? ` <small>×${r.cantidad}</small>` : ''}</span><span class="item-valor">${dinero(r.valor)}</span></div>
+          <div class="item-meta"><span class="quien" title="${esc(r.personas.join(', '))}">${r.personas.map(p => EMOJI[p] || '👤').join('')}</span>${reparto}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
+          ${r.nota ? `<div class="item-nota">${esc(r.nota)}</div>` : ''}
+          <div class="item-pie">${foto}<button class="borrar" data-borrar="${esc(r.id)}">Eliminar</button></div>
         </div>
       </div>`;
   }
@@ -656,7 +679,7 @@ $('lista').addEventListener('click', async e => {
     const j = await apiPost({ accion: 'eliminar', id: r.id });
     if (!j.ok) throw new Error(j.error);
     registros = registros.filter(x => x.id !== r.id); lsGuardar('melo_cache', registros);
-    renderTodo(); toast('🗑️ Eliminado');
+    renderTodo(); toast('Eliminado');
   } catch (err) { btn.textContent = 'Eliminar'; toast('No se pudo eliminar: ' + (err.message || 'sin conexión')); }
 });
 
@@ -688,20 +711,15 @@ function renderRanking() {
   const masCaro = todos.reduce((m, r) => (!m || r.valor > m.valor ? r : m), null);
 
   $('total-viaje').textContent = dinero(totalViaje);
-  $('stats').innerHTML = `<span>🧾 ${todos.length} consumos</span><span>📅 ${new Set(todos.map(r => r.fecha)).size} días</span>`
-    + (masCaro ? `<span>💸 Más caro: ${esc(masCaro.producto)} (${dinero(masCaro.valor)})</span>` : '');
+  const dias = new Set(todos.map(r => r.fecha)).size;
+  $('stats').innerHTML = `<div class="stat"><b>${todos.length}</b>consumos</div><div class="stat"><b>${dias}</b>día${dias === 1 ? '' : 's'}</div>`
+    + (masCaro ? `<div class="stat"><b>${dinero(masCaro.valor)}</b>el más caro: ${esc(masCaro.producto)}</div>` : '');
 
-  const lider = totales[0];
-  $('rey').innerHTML = lider && lider.total > 0
-    ? `<div class="grande">🏆${lider.emoji}</div><b>${esc(lider.id)}</b> va ganando el título de<br><b>"Rey/Reina del minibar"</b> con ${dinero(lider.total)}`
-    : `<div class="grande">🏆</div>Aún no hay campeón. ¡Registren el primer consumo!`;
-
-  const medallas = ['🥇', '🥈', '🥉', '4️⃣'];
-  $('ranking').innerHTML = `<span class="label">Lo que le corresponde a cada uno</span>` + totales.map((t, i) => `
-    <div class="rank" style="--c:${t.color}">
-      <div class="medalla">${t.total > 0 ? medallas[i] : '·'}</div>
+  $('ranking').innerHTML = totales.map((t, i) => `
+    <div class="rank ${i === 0 && t.total > 0 ? 'lider' : ''}">
+      <div class="placa">${t.total > 0 ? String(i + 1).padStart(2, '0') : '—'}</div>
       <div class="rank-cuerpo">
-        <div class="rank-nombre"><span>${t.emoji} ${esc(t.id)}</span><span>${dinero(t.total)}</span></div>
+        <div class="rank-nombre"><span class="n">${t.emoji} ${esc(t.id)}${i === 0 && t.total > 0 ? ' 🏆' : ''}</span><span class="v">${dinero(t.total)}</span></div>
         <div class="barra"><i style="width:${(t.total / maximo) * 100}%"></i></div>
         <div class="rank-meta">${t.consumos} consumo${t.consumos === 1 ? '' : 's'} · ${totalViaje ? Math.round((t.total / totalViaje) * 100) : 0}% del total</div>
       </div>
@@ -712,10 +730,10 @@ $('btn-copiar').addEventListener('click', async () => {
   const totales = calcularTotales();
   const total = todosLosRegistros().reduce((s, r) => s + r.valor, 0);
   const { fecha, hora } = ahora();
-  const texto = [`🧾 Consumos viaje a Melo (corte ${fecha} ${hora.slice(0, 5)})`, '',
+  const texto = [`🏍️ Consumos viaje a Melo (corte ${fecha} ${hora.slice(0, 5)})`, '',
     ...totales.map((t, i) => `${['🥇', '🥈', '🥉', '4️⃣'][i]} ${t.emoji} ${t.id}: ${dinero(t.total)} (${t.consumos})`),
     '', `💰 Total: ${dinero(total)}`].join('\n');
-  try { await navigator.clipboard.writeText(texto); toast('📋 Resumen copiado'); }
+  try { await navigator.clipboard.writeText(texto); toast('Resumen copiado'); }
   catch { toast('No se pudo copiar'); }
 });
 
