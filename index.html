@@ -404,7 +404,7 @@ const EMOJI = Object.fromEntries(PERSONAS.map(p => [p.id, p.emoji]));
 let registros = lsLeer('melo_cache', []);         // lo que viene de Google Sheets
 let pendientes = lsLeer('melo_pendientes', []);   // guardados sin conexión
 let seleccion = new Set();
-let pago = 'Hotel';   // 'Hotel' = cargado a la cuenta del hotel; o el nombre de quien pagó
+let pago = '';   // nombre de quien pagó (obligatorio)
 let cantidad = 1;
 let fotoDataUrl = null;
 let filtro = 'Todos';
@@ -528,12 +528,11 @@ function renderPersonas() {
   renderReparto();
 }
 function renderPagos() {
-  const ops = [{ id: 'Hotel', emoji: '🏨', nombre: 'Cuenta del hotel' }, ...PERSONAS.map(p => ({ ...p, nombre: p.id }))];
-  $('pagos').innerHTML = ops.map(o =>
-    `<button type="button" class="pago-op ${pago === o.id ? 'sel' : ''}" data-pago="${o.id}">${o.emoji} ${o.nombre}</button>`).join('');
+  $('pagos').innerHTML = PERSONAS.map(o =>
+    `<button type="button" class="pago-op ${pago === o.id ? 'sel' : ''}" data-pago="${o.id}">${o.emoji} ${o.id}</button>`).join('');
   const v = valorActual(), otros = [...seleccion].filter(p => p !== pago);
-  let ayuda = 'Queda cargado a la cuenta del hotel; nadie le debe a nadie todavía.';
-  if (pago !== 'Hotel') {
+  let ayuda = 'Elige quién pagó para saber quién le debe a quién.';
+  if (pago) {
     ayuda = !seleccion.size ? `${pago} lo pagó.`
       : !otros.length ? `${pago} pagó lo suyo; nadie le debe.`
       : `${otros.join(', ')} le ${otros.length > 1 ? 'deben' : 'debe'} a ${pago}${v ? ' ' + dinero(v / seleccion.size) + (otros.length > 1 ? ' cada uno' : '') : ''}.`;
@@ -614,6 +613,7 @@ $('form').addEventListener('submit', async e => {
   if (!producto) { toast('Escribe el producto'); $('producto').focus(); return; }
   if (!valor) { toast('Escribe el valor'); $('valor').focus(); return; }
   if (!seleccion.size) { toast('Elige quién lo consumió'); return; }
+  if (!pago) { toast('Elige quién pagó'); return; }
 
   const reg = {
     id: nuevoId(), ...ahora(), producto, cantidad, valor,
@@ -628,7 +628,7 @@ $('form').addEventListener('submit', async e => {
 
   // Limpiar formulario
   $('form').reset(); $('valor').value = ''; cantidad = 1; $('cantidad').textContent = '1';
-  seleccion = new Set(); pago = 'Hotel'; renderPersonas(); quitarFoto();
+  seleccion = new Set(); pago = ''; renderPersonas(); quitarFoto();
   document.activeElement?.blur();
 
   toast(navigator.onLine ? 'Guardando…' : 'Sin internet: se enviará luego');
@@ -642,7 +642,7 @@ $('form').addEventListener('submit', async e => {
    ============================================================ */
 function todosLosRegistros() {
   const pend = pendientes.map(p => ({ ...p, pendiente: true, valorPorPersona: p.valor / p.personas.length }));
-  return [...pend, ...registros].map(r => ({ ...r, pago: PERSONAS.some(p => p.id === r.pago) ? r.pago : 'Hotel' })).sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora));
+  return [...pend, ...registros].map(r => ({ ...r, pago: PERSONAS.some(p => p.id === r.pago) ? r.pago : '' })).sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora));
 }
 function urlMiniatura(r, tam = 'w300') {
   if (r.pendiente) return r.foto || '';
@@ -710,7 +710,7 @@ function renderHistorial() {
         <div class="hora">${(h => `${esc(h.hora)}<small>${h.ampm}</small>`)(hora12(r.hora))}</div>
         <div class="item-cuerpo">
           <div class="item-top"><span class="prod">${esc(r.producto)}${r.cantidad > 1 ? ` <small>×${r.cantidad}</small>` : ''}</span><span><span class="item-valor">${dinero(valorMostrado)}</span>${subValor}</span></div>
-          <div class="item-meta">${etiqueta}${r.pago === 'Hotel' ? '<span class="tag-hotel">🏨 A la cuenta</span>' : `<span class="tag-pago">Pagó ${EMOJI[r.pago]} ${esc(r.pago)}</span>`}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
+          <div class="item-meta">${etiqueta}${r.pago ? `<span class="tag-pago">Pagó ${EMOJI[r.pago]} ${esc(r.pago)}</span>` : '<span class="tag-hotel">Sin quién pagó</span>'}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
           ${desglose}
           ${r.nota ? `<div class="item-nota">${esc(r.nota)}</div>` : ''}
           <div class="item-pie">${foto}<button class="borrar" data-borrar="${esc(r.id)}">Eliminar</button></div>
@@ -769,9 +769,9 @@ function calcularTotales() {
 // participantes hacia esa persona. Luego se simplifica para hacer el mínimo de pagos.
 function calcularDeudas() {
   const saldo = Object.fromEntries(PERSONAS.map(p => [p.id, 0]));
-  let hotel = 0;
+  let sinPago = 0;
   for (const r of todosLosRegistros()) {
-    if (r.pago === 'Hotel') { hotel += r.valor; continue; }
+    if (!r.pago) { sinPago += r.valor; continue; }
     const parte = r.valor / r.personas.length;
     for (const q of r.personas) {
       if (q !== r.pago && q in saldo) { saldo[q] -= parte; saldo[r.pago] += parte; }
@@ -788,11 +788,11 @@ function calcularDeudas() {
     if (deben[i].v < 0.5) i++;
     if (reciben[j].v < 0.5) j++;
   }
-  return { pagos, hotel };
+  return { pagos, sinPago };
 }
 
 function renderDeudas() {
-  const { pagos, hotel } = calcularDeudas();
+  const { pagos, sinPago } = calcularDeudas();
   const filas = pagos.length
     ? pagos.map(p => `
         <div class="deuda">
@@ -801,7 +801,7 @@ function renderDeudas() {
         </div>`).join('')
     : '<div class="deudas-nota">Nadie le debe a nadie. Cuando alguien pague algo compartido, aquí aparece quién le debe.</div>';
   $('deudas').innerHTML = `<h3>Quién le debe a quién</h3>${filas}`
-    + (hotel ? `<div class="hotel-pend"><span>🏨 Cargado a la cuenta del hotel</span><b>${dinero(hotel)}</b></div>` : '');
+    + (sinPago ? `<div class="hotel-pend"><span>Consumos sin quién pagó (no cuentan aquí)</span><b>${dinero(sinPago)}</b></div>` : '');
 }
 
 function renderRanking() {
@@ -835,9 +835,8 @@ $('btn-copiar').addEventListener('click', async () => {
   const texto = [`🏖️ Consumos paseo a Melo (corte ${fecha} ${(h => h.hora + ' ' + h.ampm)(hora12(hora))})`, '',
     ...totales.map((t, i) => `${['🥇', '🥈', '🥉', '4️⃣'][i]} ${t.emoji} ${t.id}: ${dinero(t.total)} (${t.consumos})`),
     '', `💰 Total: ${dinero(total)}`,
-    ...(() => { const { pagos, hotel } = calcularDeudas();
-      return ['', '💸 Quién le debe a quién:', ...(pagos.length ? pagos.map(p => `${EMOJI[p.de]} ${p.de} → ${EMOJI[p.a]} ${p.a}: ${dinero(p.monto)}`) : ['Nadie le debe a nadie']),
-        ...(hotel ? [`🏨 A la cuenta del hotel: ${dinero(hotel)}`] : [])]; })(),
+    ...(() => { const { pagos } = calcularDeudas();
+      return ['', '💸 Quién le debe a quién:', ...(pagos.length ? pagos.map(p => `${EMOJI[p.de]} ${p.de} → ${EMOJI[p.a]} ${p.a}: ${dinero(p.monto)}`) : ['Nadie le debe a nadie'])]; })(),
     '', 'El que pelea paga la cuenta 😌'].join('\n');
   try { await navigator.clipboard.writeText(texto); toast('Resumen copiado'); }
   catch { toast('No se pudo copiar'); }

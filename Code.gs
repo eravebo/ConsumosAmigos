@@ -41,7 +41,7 @@ const COLUMNAS = [
   'Foto (enlace)',         // J
   'Foto',                  // K  (miniatura con =IMAGE)
   'Registrado en servidor', // L
-  'Pagó'                    // M  ('Hotel' = cargado a la cuenta del hotel)
+  'Pagó'                    // M  (quién pagó)
 ];
 
 
@@ -112,7 +112,8 @@ function registrar_(d) {
   if (!(valor > 0)) throw new Error('El valor debe ser mayor a 0');
   if (!personas.length) throw new Error('Elige al menos una persona');
 
-  const pago = PERSONAS_VALIDAS.indexOf(d.pago) >= 0 ? d.pago : 'Hotel';
+  const pago = PERSONAS_VALIDAS.indexOf(d.pago) >= 0 ? d.pago : '';
+  if (!pago) throw new Error('Elige quién pagó');
 
   const hoja = obtenerHoja_();
   const id = String(d.id || Utilities.getUuid());
@@ -271,7 +272,7 @@ function construirObjeto_(v, t) {
     fotoUrl: String(v[9] || ''),
     fotoId: extraerIdDrive_(v[9]),
     registrado: t[11],
-    pago: String(v[12] || 'Hotel')
+    pago: String(v[12] || '')
   };
 }
 
