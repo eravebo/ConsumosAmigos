@@ -295,7 +295,7 @@
       </div>
 
       <button type="submit" class="btn-principal" id="btn-guardar">Guardar consumo</button>
-      <div class="firma">paseo a Melo, sol y mar</div>
+      <div class="firma">El que pelea paga la cuenta</div>
     </form>
   </section>
 
@@ -707,7 +707,7 @@ $('btn-copiar').addEventListener('click', async () => {
   const { fecha, hora } = ahora();
   const texto = [`🏖️ Consumos paseo a Melo (corte ${fecha} ${hora.slice(0, 5)})`, '',
     ...totales.map((t, i) => `${['🥇', '🥈', '🥉', '4️⃣'][i]} ${t.emoji} ${t.id}: ${dinero(t.total)} (${t.consumos})`),
-    '', `💰 Total: ${dinero(total)}`].join('\n');
+    '', `💰 Total: ${dinero(total)}`, '', 'El que pelea paga la cuenta 😌'].join('\n');
   try { await navigator.clipboard.writeText(texto); toast('Resumen copiado'); }
   catch { toast('No se pudo copiar'); }
 });
