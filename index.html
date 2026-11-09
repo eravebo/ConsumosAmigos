@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gastos Melo">
+<meta name="theme-color" content="#0f766e">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Gastos viaje a Melo</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --text: #1d2a2a;
+    --muted: #6b7774;
+    --line: #e4ded2;
+    --primary: #0f766e;
+    --primary-ink: #ffffff;
+    --soft: #e6f2ef;
+    --danger: #c2410c;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+    --radius: 18px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121716;
+      --card: #1c2422;
+      --text: #ecf2f0;
+      --muted: #94a3a0;
+      --line: #2b3633;
+      --primary: #2bb3a3;
+      --primary-ink: #06201d;
+      --soft: #1f3330;
+      --danger: #fb923c;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(78px + var(--safe-bottom));
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+
+  /* ---------- Encabezado ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    padding: 12px 18px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar h1 { margin: 0; font-size: 21px; letter-spacing: -.3px; }
+  .topbar small { color: var(--muted); font-size: 13px; }
+  .top-actions { display: flex; gap: 8px; align-items: center; }
+  .pill {
+    font-size: 13px; padding: 6px 11px; border-radius: 999px;
+    background: var(--soft); color: var(--primary); font-weight: 600; white-space: nowrap;
+  }
+  .pill.warn { background: #fde7d6; color: #9a3412; }
+
+  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+  .vista { display: none; }
+  .vista.activa { display: block; animation: aparecer .18s ease-out; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-bottom: 14px;
+  }
+  .label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .4px; }
+  .campo { margin-bottom: 16px; }
+  .campo:last-child { margin-bottom: 0; }
+  input[type=text], textarea {
+    width: 100%; border: 1.5px solid var(--line); background: var(--bg);
+    border-radius: 13px; padding: 13px 14px; font-size: 17px; outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--primary); }
+  textarea { min-height: 72px; resize: vertical; }
+
+  .fila { display: flex; gap: 12px; }
+  .fila > .campo { flex: 1; min-width: 0; }
+  .valor-wrap { position: relative; }
+  .valor-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 17px; }
+  .valor-wrap input { padding-left: 28px; font-weight: 600; }
+
+  .stepper { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 13px; background: var(--bg); height: 50px; }
+  .stepper button { width: 44px; height: 100%; font-size: 22px; color: var(--primary); }
+  .stepper output { flex: 1; text-align: center; font-weight: 700; font-size: 18px; }
+
+  /* Personas */
+  .personas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .persona {
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+    border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg);
+    font-weight: 600; text-align: left; transition: transform .1s, background .15s, border-color .15s;
+  }
+  .persona:active { transform: scale(.97); }
+  .persona .emoji { font-size: 26px; line-height: 1; }
+  .persona.sel { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--card)); }
+  .persona .check { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 13px; color: #fff; }
+  .persona.sel .check { background: var(--c); border-color: var(--c); }
+  .todos-btn { font-size: 14px; color: var(--primary); font-weight: 600; padding: 2px 0; }
+  .label-fila { display: flex; justify-content: space-between; align-items: baseline; }
+  .reparto { margin-top: 10px; font-size: 14px; color: var(--muted); min-height: 20px; }
+  .reparto b { color: var(--text); }
+
+  /* Foto */
+  .foto-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px; border-radius: 13px; border: 1.5px dashed var(--line);
+    background: var(--bg); color: var(--muted); font-weight: 600;
+  }
+  .foto-preview { position: relative; display: none; }
+  .foto-preview img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 13px; display: block; }
+  .foto-preview button {
+    position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,.6); color: #fff; font-size: 16px;
+  }
+
+  .btn-principal {
+    width: 100%; padding: 16px; border-radius: 15px; font-size: 17px; font-weight: 700;
+    background: var(--primary); color: var(--primary-ink);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .btn-principal:disabled { opacity: .55; }
+  .btn-sec { padding: 10px 14px; border-radius: 12px; background: var(--soft); color: var(--primary); font-weight: 600; font-size: 15px; }
+
+  /* Historial */
+  .filtros { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
+  .filtros::-webkit-scrollbar { display: none; }
+  .chip { padding: 8px 13px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow); white-space: nowrap; font-size: 15px; font-weight: 600; }
+  .chip.sel { background: var(--primary); color: var(--primary-ink); }
+  .resumen-filtro { font-size: 14px; color: var(--muted); margin: 0 4px 10px; }
+  .item { display: flex; gap: 12px; align-items: flex-start; }
+  .thumb { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: var(--soft); }
+  .thumb-vacio { width: 64px; height: 64px; border-radius: 12px; flex-shrink: 0; background: var(--soft); display: grid; place-items: center; font-size: 26px; }
+  .item-cuerpo { flex: 1; min-width: 0; }
+  .item-top { display: flex; justify-content: space-between; gap: 8px; }
+  .item-top b { font-size: 16px; overflow-wrap: anywhere; }
+  .item-valor { font-weight: 700; white-space: nowrap; }
+  .item-meta { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .item-nota { font-size: 14px; margin-top: 6px; padding: 7px 10px; background: var(--bg); border-radius: 9px; overflow-wrap: anywhere; }
+  .item-pie { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .item-quien { font-size: 20px; letter-spacing: 2px; }
+  .borrar { font-size: 13px; color: var(--danger); font-weight: 600; padding: 4px 0; }
+  .etiqueta-pend { font-size: 12px; background: #fde7d6; color: #9a3412; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+  .grupo-dia { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin: 18px 4px 8px; }
+  .vacio { text-align: center; color: var(--muted); padding: 40px 20px; }
+  .vacio div { font-size: 42px; margin-bottom: 8px; }
+
+  /* Ranking */
+  .total-viaje { text-align: center; }
+  .total-viaje .num { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 4px 0; }
+  .stats { display: flex; justify-content: center; gap: 18px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+  .rank { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .rank:last-child { border-bottom: 0; padding-bottom: 0; }
+  .rank:first-child { padding-top: 0; }
+  .medalla { width: 34px; text-align: center; font-size: 26px; flex-shrink: 0; }
+  .rank-cuerpo { flex: 1; min-width: 0; }
+  .rank-nombre { display: flex; justify-content: space-between; font-weight: 700; gap: 8px; }
+  .barra { height: 9px; background: var(--bg); border-radius: 99px; overflow: hidden; margin: 7px 0 4px; }
+  .barra i { display: block; height: 100%; border-radius: 99px; background: var(--c); transition: width .5s ease; }
+  .rank-meta { font-size: 13px; color: var(--muted); }
+  .rey { text-align: center; font-size: 15px; }
+  .rey .grande { font-size: 44px; line-height: 1.1; }
+
+  /* Barra de pestañas */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; justify-content: space-around;
+    padding: 6px 8px calc(6px + var(--safe-bottom));
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line);
+  }
+  .tab { flex: 1; max-width: 140px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .tab .ico { font-size: 23px; line-height: 1.1; filter: grayscale(1); opacity: .65; }
+  .tab.activa { color: var(--primary); }
+  .tab.activa .ico { filter: none; opacity: 1; }
+
+  /* Toast, modales y visor */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(92px + var(--safe-bottom)); transform: translate(-50%, 20px);
+    background: #1d2a2a; color: #fff; padding: 11px 18px; border-radius: 14px; font-size: 15px;
+    opacity: 0; pointer-events: none; transition: all .25s; z-index: 50; max-width: 90vw; text-align: center;
+  }
+  .toast.ver { opacity: 1; transform: translate(-50%, 0); }
+  .velo {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .velo.ver { display: flex; }
+  .hoja {
+    background: var(--card); width: 100%; max-width: 560px; border-radius: 22px 22px 0 0;
+    padding: 22px 18px calc(18px + var(--safe-bottom)); animation: subir .22s ease-out;
+  }
+  @keyframes subir { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+  .hoja h2 { margin: 0 0 6px; font-size: 20px; }
+  .hoja p { margin: 0 0 16px; color: var(--muted); }
+  .hoja .botones { display: flex; gap: 10px; margin-top: 16px; }
+  .hoja .botones button { flex: 1; padding: 14px; border-radius: 13px; font-weight: 700; }
+  .btn-cancelar { background: var(--bg); }
+  .btn-peligro { background: var(--danger); color: #fff; }
+  .visor { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 60; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .visor.ver { display: flex; }
+  .visor img { max-width: 100%; max-height: 80vh; border-radius: 12px; }
+  .visor a { position: absolute; bottom: calc(24px + var(--safe-bottom)); color: #fff; font-weight: 600; }
+  .aviso { background: #fde7d6; color: #7c2d12; border-radius: 14px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h1>Viaje a Melo 🧳</h1>
+    <small>Control de consumos del hotel</small>
+  </div>
+  <div class="top-actions">
+    <button id="estado-sync" class="pill" title="Sincronizar">✓ Al día</button>
+  </div>
+</header>
+
+<main>
+  <div id="aviso-config" class="aviso" hidden>
+    Falta configurar la dirección de la API. Abre <b>index.html</b> y pega la URL de Apps Script en <b>CONFIG.API_URL</b>.
+  </div>
+
+  <!-- ================= REGISTRAR ================= -->
+  <section id="vista-registrar" class="vista activa">
+    <form id="form" autocomplete="off" novalidate>
+      <div class="card">
+        <div class="campo">
+          <label class="label" for="producto">Producto</label>
+          <input type="text" id="producto" list="sugerencias" placeholder="Ej: Cerveza, almuerzo, toalla extra…" enterkeyhint="next" maxlength="80">
+          <datalist id="sugerencias"></datalist>
+        </div>
+        <div class="fila">
+          <div class="campo" style="flex:1.4">
+            <label class="label" for="valor">Valor total</label>
+            <div class="valor-wrap">
+              <span>$</span>
+              <input type="text" id="valor" inputmode="numeric" placeholder="0" enterkeyhint="done">
+            </div>
+          </div>
+          <div class="campo">
+            <label class="label">Cantidad</label>
+            <div class="stepper">
+              <button type="button" id="menos" aria-label="Menos">−</button>
+              <output id="cantidad">1</output>
+              <button type="button" id="mas" aria-label="Más">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label-fila">
+          <span class="label">¿Quién consume?</span>
+          <button type="button" class="todos-btn" id="btn-todos">Todos</button>
+        </div>
+        <div class="personas" id="personas"></div>
+        <div class="reparto" id="reparto"></div>
+      </div>
+
+      <div class="card">
+        <div class="campo">
+          <label class="label" for="nota">Nota (opcional)</label>
+          <textarea id="nota" placeholder="Ej: lo pedimos a la habitación, el mesero dijo que era cortesía…" maxlength="300"></textarea>
+        </div>
+        <div class="campo">
+          <span class="label">Foto (opcional)</span>
+          <label class="foto-btn" id="foto-btn" for="foto">📷 Tomar o elegir foto</label>
+          <input type="file" id="foto" accept="image/*" hidden>
+          <div class="foto-preview" id="foto-preview">
+            <img id="foto-img" alt="Vista previa">
+            <button type="button" id="quitar-foto" aria-label="Quitar foto">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-principal" id="btn-guardar">Guardar consumo</button>
+    </form>
+  </section>
+
+  <!-- ================= HISTORIAL ================= -->
+  <section id="vista-historial" class="vista">
+    <div class="filtros" id="filtros"></div>
+    <div class="resumen-filtro" id="resumen-filtro"></div>
+    <div id="lista"></div>
+  </section>
+
+  <!-- ================= RANKING ================= -->
+  <section id="vista-ranking" class="vista">
+    <div class="card total-viaje">
+      <span class="label">Total consumido en el viaje</span>
+      <div class="num" id="total-viaje">$0</div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="card rey" id="rey"></div>
+    <div class="card" id="ranking"></div>
+    <button class="btn-sec" id="btn-copiar" style="width:100%">📋 Copiar resumen para WhatsApp</button>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab activa" data-vista="registrar"><span class="ico">➕</span>Registrar</button>
+  <button class="tab" data-vista="historial"><span class="ico">🧾</span>Historial</button>
+  <button class="tab" data-vista="ranking"><span class="ico">🏆</span>Ranking</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- Confirmación -->
+<div class="velo" id="modal-confirmar">
+  <div class="hoja">
+    <h2 id="conf-titulo">¿Eliminar?</h2>
+    <p id="conf-texto"></p>
+    <div class="botones">
+      <button class="btn-cancelar" id="conf-no">Cancelar</button>
+      <button class="btn-peligro" id="conf-si">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Visor de fotos -->
+<div class="visor" id="visor">
+  <img id="visor-img" alt="Foto del consumo">
+  <a id="visor-link" target="_blank" rel="noopener">Abrir en Google Drive ↗</a>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN — pega aquí la URL de tu implementación de Apps Script
+   ============================================================ */
+const CONFIG = {
+  API_URL: 'PEGA_AQUI_LA_URL_DE_APPS_SCRIPT',   // termina en /exec
+  MONEDA: 'COP',       // cambia a 'UYU', 'USD', etc. si lo necesitas
+  LOCALE: 'es-CO'
+};
+
+const PERSONAS = [
+  { id: 'Mejia',  emoji: '🐟', color: '#3b82f6' },
+  { id: 'Leidy',  emoji: '💜', color: '#9b5de5' },
+  { id: 'Camilo', emoji: '🐈', color: '#f59e0b' },
+  { id: 'Evelyn', emoji: '🐊', color: '#16a34a' }
+];
+const EMOJI = Object.fromEntries(PERSONAS.map(p => [p.id, p.emoji]));
+
+/* ============================================================
+   Estado de la app
+   ============================================================ */
+let registros = lsLeer('melo_cache', []);         // lo que viene de Google Sheets
+let pendientes = lsLeer('melo_pendientes', []);   // guardados sin conexión
+let seleccion = new Set();
+let cantidad = 1;
+let fotoDataUrl = null;
+let filtro = 'Todos';
+let sincronizando = false;
+
+const $ = id => document.getElementById(id);
+const apiConfigurada = () => /^https:\/\/script\.google\.com\//.test(CONFIG.API_URL);
+
+/* ---------- localStorage seguro (puede fallar en modo privado) ---------- */
+function lsLeer(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } }
+function lsGuardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+
+/* ---------- Formatos ---------- */
+const fmtMoneda = new Intl.NumberFormat(CONFIG.LOCALE, { style: 'currency', currency: CONFIG.MONEDA, maximumFractionDigits: 0 });
+const dinero = n => fmtMoneda.format(Math.round(n || 0));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const p2 = n => String(n).padStart(2, '0');
+
+function ahora() {
+  const d = new Date();
+  return {
+    fecha: `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`,
+    hora: `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`
+  };
+}
+function nombreDia(fecha) {
+  const [y, m, d] = String(fecha).split('-').map(Number);
+  if (!y) return fecha;
+  const f = new Date(y, m - 1, d);
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const dif = Math.round((hoy - f) / 86400000);
+  if (dif === 0) return 'Hoy';
+  if (dif === 1) return 'Ayer';
+  return f.toLocaleDateString(CONFIG.LOCALE, { weekday: 'long', day: 'numeric', month: 'short' });
+}
+function nuevoId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg, ms = 2600) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('ver');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('ver'), ms);
+}
+
+/* ============================================================
+   Comunicación con Google Apps Script
+   ============================================================ */
+async function apiGet(params) {
+  const url = new URL(CONFIG.API_URL);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const r = await fetch(url, { cache: 'no-store' });
+  return r.json();
+}
+// Se envía como text/plain para evitar el "preflight" CORS que Apps Script no soporta.
+async function apiPost(cuerpo) {
+  const r = await fetch(CONFIG.API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(cuerpo)
+  });
+  return r.json();
+}
+
+async function cargarRegistros(silencioso = false) {
+  if (!apiConfigurada()) return;
+  try {
+    const j = await apiGet({ accion: 'listar' });
+    if (!j.ok) { if (!silencioso) toast('⚠️ ' + j.error); return; }
+    registros = j.datos;
+    lsGuardar('melo_cache', registros);
+    renderTodo();
+  } catch (e) {
+    if (!silencioso) toast('Sin conexión: mostrando lo último guardado');
+  }
+}
+
+async function sincronizar() {
+  if (sincronizando || !pendientes.length || !apiConfigurada()) { actualizarEstado(); return; }
+  sincronizando = true; actualizarEstado();
+  let errorServidor = null;
+  for (const reg of [...pendientes]) {
+    try {
+      const j = await apiPost({ accion: 'registrar', datos: reg });
+      if (j.ok) {
+        pendientes = pendientes.filter(p => p.id !== reg.id);
+        lsGuardar('melo_pendientes', pendientes);
+      } else { errorServidor = j.error; break; }
+    } catch (e) { break; } // sin internet: se reintenta luego
+  }
+  sincronizando = false;
+  actualizarEstado();
+  if (errorServidor) toast('⚠️ ' + errorServidor, 4000);
+  await cargarRegistros(true);
+}
+
+function actualizarEstado() {
+  const b = $('estado-sync');
+  if (sincronizando) { b.textContent = '↻ Enviando…'; b.className = 'pill'; }
+  else if (pendientes.length) { b.textContent = `⏳ ${pendientes.length} pendiente${pendientes.length > 1 ? 's' : ''}`; b.className = 'pill warn'; }
+  else { b.textContent = '✓ Al día'; b.className = 'pill'; }
+}
+
+/* ============================================================
+   Formulario de registro
+   ============================================================ */
+function renderPersonas() {
+  $('personas').innerHTML = PERSONAS.map(p => `
+    <button type="button" class="persona ${seleccion.has(p.id) ? 'sel' : ''}" data-id="${p.id}" style="--c:${p.color}">
+      <span class="emoji">${p.emoji}</span>${p.id}<span class="check">${seleccion.has(p.id) ? '✓' : ''}</span>
+    </button>`).join('');
+  $('btn-todos').textContent = seleccion.size === PERSONAS.length ? 'Ninguno' : 'Todos';
+  renderReparto();
+}
+function valorActual() { return Number($('valor').value.replace(/\D/g, '')) || 0; }
+function renderReparto() {
+  const v = valorActual(), n = seleccion.size;
+  if (n > 1 && v > 0) $('reparto').innerHTML = `Se divide entre ${n}: <b>${dinero(v / n)}</b> c/u`;
+  else if (n === 1 && v > 0) $('reparto').innerHTML = `Todo para ${EMOJI[[...seleccion][0]]} <b>${[...seleccion][0]}</b>`;
+  else $('reparto').textContent = 'Puedes elegir varias personas si lo compartieron.';
+}
+
+$('personas').addEventListener('click', e => {
+  const b = e.target.closest('.persona'); if (!b) return;
+  const id = b.dataset.id;
+  seleccion.has(id) ? seleccion.delete(id) : seleccion.add(id);
+  renderPersonas();
+});
+$('btn-todos').addEventListener('click', () => {
+  seleccion = seleccion.size === PERSONAS.length ? new Set() : new Set(PERSONAS.map(p => p.id));
+  renderPersonas();
+});
+$('valor').addEventListener('input', e => {
+  const digitos = e.target.value.replace(/\D/g, '').slice(0, 10);
+  e.target.value = digitos ? Number(digitos).toLocaleString(CONFIG.LOCALE) : '';
+  renderReparto();
+});
+$('menos').addEventListener('click', () => { cantidad = Math.max(1, cantidad - 1); $('cantidad').textContent = cantidad; });
+$('mas').addEventListener('click', () => { cantidad = Math.min(99, cantidad + 1); $('cantidad').textContent = cantidad; });
+
+/* ---------- Foto: se reduce en el celular antes de enviarla ---------- */
+function comprimirImagen(archivo, maxLado = 1280, calidad = 0.72) {
+  return new Promise((resolver, rechazar) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      const escala = Math.min(1, maxLado / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * escala), h = Math.round(img.naturalHeight * escala);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolver(canvas.toDataURL('image/jpeg', calidad));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rechazar(new Error('No se pudo leer la imagen')); };
+    img.src = url;
+  });
+}
+$('foto').addEventListener('change', async e => {
+  const archivo = e.target.files[0]; if (!archivo) return;
+  try {
+    $('foto-btn').textContent = 'Procesando foto…';
+    fotoDataUrl = await comprimirImagen(archivo);
+    $('foto-img').src = fotoDataUrl;
+    $('foto-preview').style.display = 'block';
+    $('foto-btn').style.display = 'none';
+  } catch (err) { toast('No se pudo cargar la foto'); }
+  finally { $('foto-btn').textContent = '📷 Tomar o elegir foto'; e.target.value = ''; }
+});
+$('quitar-foto').addEventListener('click', quitarFoto);
+function quitarFoto() {
+  fotoDataUrl = null;
+  $('foto-preview').style.display = 'none';
+  $('foto-btn').style.display = 'flex';
+}
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const producto = $('producto').value.trim();
+  const valor = valorActual();
+  if (!producto) { toast('Escribe el producto'); $('producto').focus(); return; }
+  if (!valor) { toast('Escribe el valor'); $('valor').focus(); return; }
+  if (!seleccion.size) { toast('Elige quién lo consumió'); return; }
+
+  const reg = {
+    id: nuevoId(), ...ahora(), producto, cantidad, valor,
+    personas: [...seleccion], nota: $('nota').value.trim(), foto: fotoDataUrl
+  };
+
+  pendientes.push(reg);
+  if (!lsGuardar('melo_pendientes', pendientes) && reg.foto) {
+    // Si no cabe en memoria local (fotos pesadas), se guarda igual sin respaldo local.
+    console.warn('No se pudo respaldar localmente');
+  }
+
+  // Limpiar formulario
+  $('form').reset(); $('valor').value = ''; cantidad = 1; $('cantidad').textContent = '1';
+  seleccion = new Set(); renderPersonas(); quitarFoto();
+  document.activeElement?.blur();
+
+  toast(navigator.onLine ? '✅ Guardando en Google Sheets…' : '📴 Guardado. Se enviará cuando haya internet');
+  renderTodo();
+  await sincronizar();
+  if (!pendientes.find(p => p.id === reg.id)) toast('✅ Guardado en Google Sheets');
+});
+
+/* ============================================================
+   Historial
+   ============================================================ */
+function todosLosRegistros() {
+  const pend = pendientes.map(p => ({ ...p, pendiente: true, valorPorPersona: p.valor / p.personas.length }));
+  return [...pend, ...registros].sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora));
+}
+function urlMiniatura(r, tam = 'w300') {
+  if (r.pendiente) return r.foto || '';
+  return r.fotoId ? `https://drive.google.com/thumbnail?id=${r.fotoId}&sz=${tam}` : '';
+}
+
+function renderFiltros() {
+  const opciones = [{ id: 'Todos', emoji: '👥' }, ...PERSONAS];
+  $('filtros').innerHTML = opciones.map(o =>
+    `<button class="chip ${filtro === o.id ? 'sel' : ''}" data-f="${o.id}">${o.emoji} ${o.id}</button>`).join('');
+}
+$('filtros').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  filtro = b.dataset.f; renderHistorial();
+});
+
+function renderHistorial() {
+  renderFiltros();
+  const lista = todosLosRegistros().filter(r => filtro === 'Todos' || r.personas.includes(filtro));
+
+  if (!lista.length) {
+    $('resumen-filtro').textContent = '';
+    $('lista').innerHTML = `<div class="vacio"><div>🧾</div>Todavía no hay consumos${filtro !== 'Todos' ? ' de ' + esc(filtro) : ''}.</div>`;
+    return;
+  }
+
+  const total = lista.reduce((s, r) => s + (filtro === 'Todos' ? r.valor : r.valorPorPersona), 0);
+  $('resumen-filtro').innerHTML = `${lista.length} consumo${lista.length > 1 ? 's' : ''} · ${filtro === 'Todos' ? 'total' : 'le corresponde'} <b>${dinero(total)}</b>`;
+
+  let html = '', diaActual = '';
+  for (const r of lista) {
+    if (r.fecha !== diaActual) { diaActual = r.fecha; html += `<div class="grupo-dia">${esc(nombreDia(r.fecha))}</div>`; }
+    const mini = urlMiniatura(r);
+    const foto = mini
+      ? `<img class="thumb" src="${esc(mini)}" loading="lazy" data-ver="${esc(r.id)}" alt="Foto" onerror="this.outerHTML='<div class=&quot;thumb-vacio&quot;>🖼️</div>'">`
+      : `<div class="thumb-vacio">🍽️</div>`;
+    const reparto = r.personas.length > 1 ? ` · ${dinero(r.valorPorPersona)} c/u` : '';
+    html += `
+      <div class="card item">
+        ${foto}
+        <div class="item-cuerpo">
+          <div class="item-top"><b>${esc(r.producto)}${r.cantidad > 1 ? ` ×${r.cantidad}` : ''}</b><span class="item-valor">${dinero(r.valor)}</span></div>
+          <div class="item-meta">${esc(String(r.hora).slice(0, 5))}${reparto} ${r.pendiente ? '<span class="etiqueta-pend">⏳ sin enviar</span>' : ''}</div>
+          ${r.nota ? `<div class="item-nota">📝 ${esc(r.nota)}</div>` : ''}
+          <div class="item-pie">
+            <span class="item-quien" title="${esc(r.personas.join(', '))}">${r.personas.map(p => EMOJI[p] || '👤').join('')}</span>
+            <button class="borrar" data-borrar="${esc(r.id)}">Eliminar</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  $('lista').innerHTML = html;
+}
+
+$('lista').addEventListener('click', async e => {
+  const ver = e.target.closest('[data-ver]');
+  if (ver) {
+    const r = todosLosRegistros().find(x => x.id === ver.dataset.ver);
+    if (r) abrirVisor(r);
+    return;
+  }
+  const btn = e.target.closest('[data-borrar]'); if (!btn) return;
+  const r = todosLosRegistros().find(x => x.id === btn.dataset.borrar); if (!r) return;
+  const ok = await confirmar('¿Eliminar consumo?', `${r.producto} — ${dinero(r.valor)}. También se borrará de Google Sheets.`);
+  if (!ok) return;
+
+  if (r.pendiente) {
+    pendientes = pendientes.filter(p => p.id !== r.id); lsGuardar('melo_pendientes', pendientes);
+    renderTodo(); actualizarEstado(); toast('Eliminado'); return;
+  }
+  try {
+    btn.textContent = 'Eliminando…';
+    const j = await apiPost({ accion: 'eliminar', id: r.id });
+    if (!j.ok) throw new Error(j.error);
+    registros = registros.filter(x => x.id !== r.id); lsGuardar('melo_cache', registros);
+    renderTodo(); toast('🗑️ Eliminado');
+  } catch (err) { btn.textContent = 'Eliminar'; toast('No se pudo eliminar: ' + (err.message || 'sin conexión')); }
+});
+
+function abrirVisor(r) {
+  $('visor-img').src = r.pendiente ? r.foto : urlMiniatura(r, 'w1600');
+  const link = $('visor-link');
+  if (r.fotoUrl) { link.href = r.fotoUrl; link.style.display = ''; } else link.style.display = 'none';
+  $('visor').classList.add('ver');
+}
+$('visor').addEventListener('click', e => { if (e.target.id !== 'visor-link') $('visor').classList.remove('ver'); });
+
+/* ============================================================
+   Ranking 🏆
+   ============================================================ */
+function calcularTotales() {
+  const t = Object.fromEntries(PERSONAS.map(p => [p.id, { ...p, total: 0, consumos: 0 }]));
+  for (const r of todosLosRegistros()) {
+    const parte = r.valor / r.personas.length;
+    for (const p of r.personas) if (t[p]) { t[p].total += parte; t[p].consumos++; }
+  }
+  return Object.values(t).sort((a, b) => b.total - a.total);
+}
+
+function renderRanking() {
+  const todos = todosLosRegistros();
+  const totales = calcularTotales();
+  const totalViaje = todos.reduce((s, r) => s + r.valor, 0);
+  const maximo = Math.max(1, ...totales.map(t => t.total));
+  const masCaro = todos.reduce((m, r) => (!m || r.valor > m.valor ? r : m), null);
+
+  $('total-viaje').textContent = dinero(totalViaje);
+  $('stats').innerHTML = `<span>🧾 ${todos.length} consumos</span><span>📅 ${new Set(todos.map(r => r.fecha)).size} días</span>`
+    + (masCaro ? `<span>💸 Más caro: ${esc(masCaro.producto)} (${dinero(masCaro.valor)})</span>` : '');
+
+  const lider = totales[0];
+  $('rey').innerHTML = lider && lider.total > 0
+    ? `<div class="grande">🏆${lider.emoji}</div><b>${esc(lider.id)}</b> va ganando el título de<br><b>"Rey/Reina del minibar"</b> con ${dinero(lider.total)}`
+    : `<div class="grande">🏆</div>Aún no hay campeón. ¡Registren el primer consumo!`;
+
+  const medallas = ['🥇', '🥈', '🥉', '4️⃣'];
+  $('ranking').innerHTML = `<span class="label">Lo que le corresponde a cada uno</span>` + totales.map((t, i) => `
+    <div class="rank" style="--c:${t.color}">
+      <div class="medalla">${t.total > 0 ? medallas[i] : '·'}</div>
+      <div class="rank-cuerpo">
+        <div class="rank-nombre"><span>${t.emoji} ${esc(t.id)}</span><span>${dinero(t.total)}</span></div>
+        <div class="barra"><i style="width:${(t.total / maximo) * 100}%"></i></div>
+        <div class="rank-meta">${t.consumos} consumo${t.consumos === 1 ? '' : 's'} · ${totalViaje ? Math.round((t.total / totalViaje) * 100) : 0}% del total</div>
+      </div>
+    </div>`).join('');
+}
+
+$('btn-copiar').addEventListener('click', async () => {
+  const totales = calcularTotales();
+  const total = todosLosRegistros().reduce((s, r) => s + r.valor, 0);
+  const { fecha, hora } = ahora();
+  const texto = [`🧾 Consumos viaje a Melo (corte ${fecha} ${hora.slice(0, 5)})`, '',
+    ...totales.map((t, i) => `${['🥇', '🥈', '🥉', '4️⃣'][i]} ${t.emoji} ${t.id}: ${dinero(t.total)} (${t.consumos})`),
+    '', `💰 Total: ${dinero(total)}`].join('\n');
+  try { await navigator.clipboard.writeText(texto); toast('📋 Resumen copiado'); }
+  catch { toast('No se pudo copiar'); }
+});
+
+/* ============================================================
+   Navegación, modales y arranque
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t === tab));
+  document.querySelectorAll('.vista').forEach(v => v.classList.toggle('activa', v.id === 'vista-' + tab.dataset.vista));
+  window.scrollTo({ top: 0 });
+  if (tab.dataset.vista !== 'registrar') cargarRegistros(true);
+}));
+
+function renderSugerencias() {
+  const unicos = [...new Set(registros.map(r => r.producto))].slice(0, 40);
+  $('sugerencias').innerHTML = unicos.map(p => `<option value="${esc(p)}">`).join('');
+}
+function renderTodo() { renderHistorial(); renderRanking(); renderSugerencias(); actualizarEstado(); }
+
+$('estado-sync').addEventListener('click', async () => { await sincronizar(); await cargarRegistros(); toast('Datos actualizados'); });
+
+function confirmar(titulo, texto) {
+  return new Promise(resolver => {
+    $('conf-titulo').textContent = titulo; $('conf-texto').textContent = texto;
+    const m = $('modal-confirmar'); m.classList.add('ver');
+    const cerrar = v => { m.classList.remove('ver'); $('conf-si').onclick = $('conf-no').onclick = null; resolver(v); };
+    $('conf-si').onclick = () => cerrar(true);
+    $('conf-no').onclick = () => cerrar(false);
+  });
+}
+
+window.addEventListener('online', sincronizar);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { sincronizar(); cargarRegistros(true); } });
+
+// Arranque
+$('aviso-config').hidden = apiConfigurada();
+renderPersonas();
+renderTodo();
+if (apiConfigurada()) { cargarRegistros(true); sincronizar(); }
+</script>
+</body>
+</html>
