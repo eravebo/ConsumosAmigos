@@ -139,8 +139,19 @@
   .filtros::-webkit-scrollbar { display: none; }
   .chip { padding: 8px 14px; border-radius: 999px; background: var(--espuma); white-space: nowrap; font-size: 15px; font-weight: 600; color: var(--suave); }
   .chip.sel { background: var(--mar); color: #fff; }
-  .resumen-filtro { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 4px 0; color: var(--suave); font-size: 15px; }
-  .resumen-filtro b { font-family: var(--titulo); font-weight: 700; font-size: 26px; color: var(--tinta); }
+  .resumen-filtro { margin-top: 14px; }
+  .resumen { background: var(--espuma); border-radius: 20px; padding: 16px 18px; }
+  .resumen .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; color: var(--suave); font-size: 15px; }
+  .resumen .cab b { font-family: var(--titulo); font-weight: 700; font-size: 30px; color: var(--tinta); white-space: nowrap; }
+  .resumen .cab strong { color: var(--tinta); }
+  .partes { display: flex; gap: 8px; margin-top: 12px; }
+  .parte { flex: 1; background: var(--arena); border-radius: 14px; padding: 9px 12px; font-size: 13px; color: var(--suave); }
+  .parte b { display: block; font-family: var(--titulo); font-weight: 700; font-size: 18px; color: var(--tinta); }
+  .parte.comp { background: #E2F4F2; }
+  .desglose { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .cuota { font-size: 13px; font-weight: 600; background: var(--arena); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .cuota.yo { background: var(--mar); color: #fff; }
+  .item-total { font-size: 12px; color: var(--suave); text-align: right; white-space: nowrap; }
   .grupo-dia { margin: 22px 4px 8px; font-family: var(--titulo); font-style: italic; font-weight: 600; font-size: 19px; color: var(--mar-hondo); text-transform: capitalize; }
   #lista .item { background: var(--espuma); border-radius: 20px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; }
   .hora { width: 42px; flex-shrink: 0; font-size: 14px; font-weight: 600; color: var(--suave); padding-top: 2px; }
@@ -157,6 +168,7 @@
   .thumb { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; display: block; background: var(--arena); }
   .thumb-btn { flex-shrink: 0; }
   .borrar { font-size: 13px; font-weight: 600; color: var(--coral); padding: 4px 0; margin-left: auto; }
+  .tag-comp { font-size: 12px; font-weight: 600; color: var(--mar-hondo); background: #DDF1EF; padding: 1px 8px; border-radius: 999px; }
   .pend-tag { font-size: 12px; font-weight: 600; color: #7a5200; background: #FFE7A8; padding: 1px 8px; border-radius: 999px; }
   .vacio { text-align: center; color: var(--suave); padding: 60px 20px; }
   .vacio .t { font-weight: 700; font-style: italic; font-size: 26px; color: var(--tinta); margin-bottom: 6px; }
@@ -608,8 +620,24 @@ function renderHistorial() {
     return;
   }
 
-  const total = lista.reduce((s, r) => s + (filtro === 'Todos' ? r.valor : r.valorPorPersona), 0);
-  $('resumen-filtro').innerHTML = `<span>${lista.length} consumo${lista.length > 1 ? 's' : ''}${filtro === 'Todos' ? '' : ' · le corresponde'}</span><b>${dinero(total)}</b>`;
+  // ---- Resumen: cuánto suma y cómo se divide ----
+  const esTodos = filtro === 'Todos';
+  const individual = lista.filter(r => r.personas.length === 1);
+  const compartido = lista.filter(r => r.personas.length > 1);
+  const parte = r => esTodos ? r.valor : r.valorPorPersona;
+  const sumaInd = individual.reduce((s, r) => s + parte(r), 0);
+  const sumaComp = compartido.reduce((s, r) => s + parte(r), 0);
+  const titulo = esTodos
+    ? `<span>Cuenta total<br><small>${lista.length} consumo${lista.length > 1 ? 's' : ''}</small></span>`
+    : `<span><strong>${EMOJI[filtro]} ${esc(filtro)}</strong> debe pagar<br><small>${lista.length} consumo${lista.length > 1 ? 's' : ''}</small></span>`;
+  $('resumen-filtro').innerHTML = `
+    <div class="resumen">
+      <div class="cab">${titulo}<b>${dinero(sumaInd + sumaComp)}</b></div>
+      <div class="partes">
+        <div class="parte"><b>${dinero(sumaInd)}</b>${esTodos ? 'individual' : 'solo suyo'} · ${individual.length}</div>
+        <div class="parte comp"><b>${dinero(sumaComp)}</b>${esTodos ? 'compartido' : 'su parte de lo compartido'} · ${compartido.length}</div>
+      </div>
+    </div>`;
 
   let html = '', diaActual = '';
   for (const r of lista) {
@@ -618,13 +646,23 @@ function renderHistorial() {
     const foto = mini
       ? `<button class="thumb-btn" data-ver="${esc(r.id)}" aria-label="Ver foto"><img class="thumb" src="${esc(mini)}" loading="lazy" alt="" onerror="this.parentNode.remove()"></button>`
       : '';
-    const reparto = r.personas.length > 1 ? `<span>${dinero(r.valorPorPersona)} c/u</span>` : '';
+    const esComp = r.personas.length > 1;
+    // Valor grande: cuenta completa en "Todos"; solo lo que le toca a la persona filtrada.
+    const valorMostrado = esTodos ? r.valor : r.valorPorPersona;
+    const subValor = (!esTodos && esComp) ? `<div class="item-total">de ${dinero(r.valor)}</div>` : '';
+    const etiqueta = esComp
+      ? `<span class="tag-comp">Compartido entre ${r.personas.length}</span>`
+      : `<span>${esTodos ? 'Solo ' + esc(r.personas[0]) + ' ' + (EMOJI[r.personas[0]] || '') : 'Solo suyo'}</span>`;
+    const desglose = esComp
+      ? `<div class="desglose">${r.personas.map(p => `<span class="cuota ${p === filtro ? 'yo' : ''}">${EMOJI[p] || '👤'} ${esc(p)} ${dinero(r.valorPorPersona)}</span>`).join('')}</div>`
+      : '';
     html += `
       <div class="item">
         <div class="hora">${esc(String(r.hora).slice(0, 5))}</div>
         <div class="item-cuerpo">
-          <div class="item-top"><span class="prod">${esc(r.producto)}${r.cantidad > 1 ? ` <small>×${r.cantidad}</small>` : ''}</span><span class="item-valor">${dinero(r.valor)}</span></div>
-          <div class="item-meta"><span class="quien" title="${esc(r.personas.join(', '))}">${r.personas.map(p => EMOJI[p] || '👤').join('')}</span>${reparto}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
+          <div class="item-top"><span class="prod">${esc(r.producto)}${r.cantidad > 1 ? ` <small>×${r.cantidad}</small>` : ''}</span><span><span class="item-valor">${dinero(valorMostrado)}</span>${subValor}</span></div>
+          <div class="item-meta">${etiqueta}${r.pendiente ? '<span class="pend-tag">Sin enviar</span>' : ''}</div>
+          ${desglose}
           ${r.nota ? `<div class="item-nota">${esc(r.nota)}</div>` : ''}
           <div class="item-pie">${foto}<button class="borrar" data-borrar="${esc(r.id)}">Eliminar</button></div>
         </div>
