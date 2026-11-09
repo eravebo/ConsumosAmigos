@@ -40,7 +40,8 @@ const COLUMNAS = [
   'Nota',                  // I
   'Foto (enlace)',         // J
   'Foto',                  // K  (miniatura con =IMAGE)
-  'Registrado en servidor' // L
+  'Registrado en servidor', // L
+  'Pagó'                    // M  ('Hotel' = cargado a la cuenta del hotel)
 ];
 
 
@@ -111,6 +112,8 @@ function registrar_(d) {
   if (!(valor > 0)) throw new Error('El valor debe ser mayor a 0');
   if (!personas.length) throw new Error('Elige al menos una persona');
 
+  const pago = PERSONAS_VALIDAS.indexOf(d.pago) >= 0 ? d.pago : 'Hotel';
+
   const hoja = obtenerHoja_();
   const id = String(d.id || Utilities.getUuid());
 
@@ -139,7 +142,8 @@ function registrar_(d) {
     textoSeguro_(String(d.nota || '').trim()),
     fotoUrl,
     formulaFoto,
-    Utilities.formatDate(ahora, CONFIG.ZONA_HORARIA, 'yyyy-MM-dd HH:mm:ss')
+    Utilities.formatDate(ahora, CONFIG.ZONA_HORARIA, 'yyyy-MM-dd HH:mm:ss'),
+    pago
   ];
 
   hoja.appendRow(fila);
@@ -202,6 +206,11 @@ function obtenerHoja_() {
     hoja.setColumnWidth(9, 220);
     hoja.setColumnWidth(11, 110);
   }
+  // Si la hoja se creó con una versión anterior, agrega los encabezados que falten.
+  if (hoja.getRange(1, COLUMNAS.length).getValue() !== COLUMNAS[COLUMNAS.length - 1]) {
+    hoja.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS])
+      .setFontWeight('bold').setBackground('#0B4250').setFontColor('#ffffff');
+  }
   return hoja;
 }
 
@@ -261,7 +270,8 @@ function construirObjeto_(v, t) {
     nota: String(v[8] || ''),
     fotoUrl: String(v[9] || ''),
     fotoId: extraerIdDrive_(v[9]),
-    registrado: t[11]
+    registrado: t[11],
+    pago: String(v[12] || 'Hotel')
   };
 }
 
