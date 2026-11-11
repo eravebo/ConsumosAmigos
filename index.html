@@ -552,8 +552,10 @@ async function sincronizar() {
 
 function actualizarEstado() {
   const b = $('estado-sync');
-  if (sincronizando) { b.textContent = 'Enviando'; b.className = 'estado envio'; }
-  else if (pendientes.length) { b.textContent = `${pendientes.length} sin enviar`; b.className = 'estado pend'; }
+  const n = pendientes.length, sinEnviar = n ? ` · ${n} sin enviar` : '';
+  if (!navigator.onLine) { b.textContent = 'Sin conexión' + sinEnviar; b.className = 'estado pend'; }
+  else if (sincronizando) { b.textContent = 'Enviando'; b.className = 'estado envio'; }
+  else if (n) { b.textContent = `${n} sin enviar`; b.className = 'estado pend'; }
   else { b.textContent = 'Al día'; b.className = 'estado'; }
 }
 
@@ -729,7 +731,7 @@ $('foto').addEventListener('change', async e => {
   const archivo = e.target.files[0]; if (!archivo) return;
   try {
     $('foto-btn').querySelector('span').textContent = 'Procesando…';
-    fotoDataUrl = await comprimirImagen(archivo);
+    fotoDataUrl = navigator.onLine ? await comprimirImagen(archivo) : await comprimirImagen(archivo, 900, 0.6);
     $('foto-img').src = fotoDataUrl;
     $('foto-preview').style.display = 'block';
     $('foto-btn').style.display = 'none';
@@ -760,8 +762,10 @@ $('form').addEventListener('submit', async e => {
 
   pendientes.push(reg);
   if (!lsGuardar('melo_pendientes', pendientes) && reg.foto) {
-    // Si no cabe en memoria local (fotos pesadas), se guarda igual sin respaldo local.
-    console.warn('No se pudo respaldar localmente');
+    // Sin espacio en el celular: se guarda el consumo sin la foto para no perderlo.
+    reg.foto = null;
+    lsGuardar('melo_pendientes', pendientes);
+    toast('Sin espacio para la foto: se guardó el consumo sin foto', 4000);
   }
 
   // Limpiar formulario
@@ -1007,7 +1011,13 @@ function confirmar(titulo, texto) {
   });
 }
 
-window.addEventListener('online', sincronizar);
+window.addEventListener('online', () => { actualizarEstado(); sincronizar(); });
+window.addEventListener('offline', actualizarEstado);
+
+// Modo sin internet: guarda la app en el celular (solo funciona en https, como GitHub Pages).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { sincronizar(); cargarRegistros(true); } });
 
 // Arranque
