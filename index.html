@@ -97,6 +97,28 @@
   .stepper output { min-width: 22px; text-align: center; font-family: var(--titulo); font-weight: 700; font-size: 22px; }
   .x { font-size: 14px; font-weight: 600; color: var(--suave); text-align: center; margin-bottom: 6px; }
 
+  /* Selector del menú */
+  .prod-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left;
+    border: 2px solid var(--linea); background: var(--arena); border-radius: 16px; padding: 13px 14px; font-size: 17px; }
+  .prod-btn .vacio-txt { color: #A9A08F; }
+  .prod-btn .elegido { font-weight: 600; }
+  .prod-btn .flecha { color: var(--mar); font-weight: 700; white-space: nowrap; font-size: 14px; }
+  #otro-wrap { margin-top: 10px; }
+  .valor-wrap.bloqueado input { color: var(--tinta); }
+  .valor-ayuda { font-size: 13px; color: var(--suave); margin-top: 6px; min-height: 18px; }
+  .hoja-menu { max-height: 90vh; display: flex; flex-direction: column; padding-bottom: calc(14px + var(--safe-bottom)); }
+  .menu-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .menu-cab h2 { margin: 0; }
+  .menu-cab button { width: 36px; height: 36px; border-radius: 50%; background: var(--arena-2); font-size: 15px; }
+  .hoja-menu .filtros { padding: 12px 0 6px; flex-shrink: 0; }
+  .hoja-menu .chip { background: var(--arena); }
+  .hoja-menu .chip.sel { background: var(--mar); }
+  .menu-lista { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 120px; margin: 0 -4px; padding: 0 4px; }
+  .menu-cat { font-family: var(--titulo); font-style: italic; font-weight: 700; font-size: 18px; color: var(--mar-hondo); margin: 14px 0 4px; }
+  .menu-item { width: 100%; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; text-align: left; padding: 12px 2px; border-bottom: 1px solid var(--linea); font-size: 16px; }
+  .menu-item b { font-family: var(--titulo); font-weight: 700; white-space: nowrap; }
+  .menu-vacio { color: var(--suave); text-align: center; padding: 24px 0; }
+  .btn-otro { margin-top: 12px; width: 100%; padding: 14px; border-radius: 999px; border: 2px dashed var(--coral); color: var(--coral); font-weight: 700; flex-shrink: 0; }
   .label-fila { display: flex; justify-content: space-between; align-items: baseline; }
   .todos-btn { font-size: 14px; font-weight: 600; color: var(--mar); }
   .personas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -274,17 +296,24 @@
   <section id="vista-registrar" class="vista activa">
     <form id="form" autocomplete="off" novalidate>
       <div class="bloque">
-        <label class="label" for="producto">Producto</label>
-        <input type="text" id="producto" list="sugerencias" placeholder="Cerveza, almuerzo, toalla extra…" enterkeyhint="next" maxlength="80">
-        <datalist id="sugerencias"></datalist>
+        <span class="label">Producto</span>
+        <button type="button" class="prod-btn" id="prod-btn">
+          <span id="prod-nombre" class="vacio-txt">Elegir del menú del hotel</span>
+          <span class="flecha" id="prod-flecha">Ver menú ›</span>
+        </button>
+        <div id="otro-wrap" hidden>
+          <input type="text" id="producto" list="sugerencias" placeholder="¿Qué fue? (no está en el menú)" enterkeyhint="next" maxlength="80">
+          <datalist id="sugerencias"></datalist>
+        </div>
 
         <div class="valor-fila">
           <div style="flex:1;min-width:0">
             <label class="label" for="valor">Valor total</label>
             <div class="valor-wrap">
               <span>$</span>
-              <input type="text" id="valor" inputmode="numeric" placeholder="0" enterkeyhint="done">
+              <input type="text" id="valor" inputmode="numeric" placeholder="0" enterkeyhint="done" readonly>
             </div>
+            <div class="valor-ayuda" id="valor-ayuda"></div>
           </div>
           <div>
             <div class="x">Cantidad</div>
@@ -362,6 +391,17 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Menú del hotel -->
+<div class="velo" id="modal-menu">
+  <div class="hoja hoja-menu">
+    <div class="menu-cab"><h2>Menú del hotel</h2><button type="button" id="cerrar-menu" aria-label="Cerrar">✕</button></div>
+    <input type="text" id="buscar-menu" placeholder="Buscar: pizza, cerveza, coco…" autocomplete="off">
+    <div class="filtros" id="cats-menu"></div>
+    <div class="menu-lista" id="menu-lista"></div>
+    <button type="button" class="btn-otro" id="btn-otro">+ Otro (no está en el menú)</button>
+  </div>
+</div>
+
 <!-- Confirmación -->
 <div class="velo" id="modal-confirmar">
   <div class="hoja">
@@ -380,6 +420,7 @@
   <span class="visor-cerrar">Toca para cerrar</span>
 </div>
 
+<script src="menu.js"></script>
 <script>
 /* ============================================================
    CONFIGURACIÓN — pega aquí la URL de tu implementación de Apps Script
@@ -519,6 +560,102 @@ function actualizarEstado() {
 /* ============================================================
    Formulario de registro
    ============================================================ */
+/* ---------- Menú del hotel ---------- */
+const MENU_API = 'https://gateway.pouchnation.com/inventory/online-order/search';
+let MENU = normalizarMenu(lsLeer('melo_menu', null) || MENU_RESPALDO);
+let elegido = null;    // producto del menú elegido: {nombre, precio, cat}
+let modoOtro = false;  // true = producto escrito a mano con valor manual
+let catMenu = 'Todo';
+
+function bonito(t) {
+  const s = String(t).replace(/\s+/g, ' ').replace(/\.+$/, '').trim().toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function normalizarMenu(filas) {
+  return filas.map(([c, n, precio]) => {
+    const cat = !c || c === 'SIN CATEGORIA' ? '07. LICORES' : c;
+    return { cat: bonito(cat.replace(/^\d+\.\s*/, '')), orden: (cat.match(/^(\d+)/) || [, '99'])[1], nombre: bonito(n), precio: Number(precio) };
+  }).filter(x => x.precio > 0);
+}
+// Intenta traer el menú en vivo desde el sistema del hotel; si falla, se queda con la copia guardada.
+async function cargarMenuEnVivo() {
+  try {
+    const r = await fetch(MENU_API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ venueId: 670, locationIds: [2576], page: 1, pageSize: 1000, isForMobileOrdering: true })
+    });
+    const j = await r.json();
+    const filas = (j.data || []).filter(p => p.isActiveMobileOrdering !== false)
+      .map(p => [((p.categories || [])[0] || {}).categoryName || 'SIN CATEGORIA', p.productName, Math.round(p.retailPrice)]);
+    if (filas.length > 10) { lsGuardar('melo_menu', filas); MENU = normalizarMenu(filas); if ($('modal-menu').classList.contains('ver')) renderMenu(); }
+  } catch (e) { /* sin conexión o bloqueado: se usa la copia */ }
+}
+const sinTildes = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function renderMenu() {
+  const cats = [...new Map(MENU.slice().sort((a, b) => a.orden.localeCompare(b.orden)).map(x => [x.cat, x.orden])).keys()];
+  $('cats-menu').innerHTML = ['Todo', ...cats].map(c => `<button type="button" class="chip ${catMenu === c ? 'sel' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  const q = sinTildes($('buscar-menu').value.trim());
+  const lista = MENU.map((x, i) => ({ ...x, i }))
+    .filter(x => (catMenu === 'Todo' || x.cat === catMenu) && (!q || sinTildes(x.nombre + ' ' + x.cat).includes(q)))
+    .sort((a, b) => a.orden.localeCompare(b.orden) || a.nombre.localeCompare(b.nombre));
+  if (!lista.length) { $('menu-lista').innerHTML = '<div class="menu-vacio">No está en el menú. Usa "Otro".</div>'; return; }
+  let html = '', cat = '';
+  for (const x of lista) {
+    if (x.cat !== cat) { cat = x.cat; html += `<div class="menu-cat">${esc(cat)}</div>`; }
+    html += `<button type="button" class="menu-item" data-i="${x.i}"><span>${esc(x.nombre)}</span><b>${dinero(x.precio)}</b></button>`;
+  }
+  $('menu-lista').innerHTML = html;
+}
+function abrirMenu() {
+  $('buscar-menu').value = ''; renderMenu();
+  $('modal-menu').classList.add('ver'); $('menu-lista').scrollTop = 0;
+}
+function cerrarMenu() { $('modal-menu').classList.remove('ver'); document.activeElement?.blur(); }
+
+function actualizarProducto() {
+  const nombre = $('prod-nombre');
+  $('otro-wrap').hidden = !modoOtro;
+  $('valor').readOnly = !modoOtro;
+  if (elegido) {
+    nombre.textContent = elegido.nombre; nombre.className = 'elegido';
+    $('prod-flecha').textContent = 'Cambiar ›';
+    $('producto').value = elegido.nombre;
+    const total = elegido.precio * cantidad;
+    $('valor').value = total.toLocaleString(CONFIG.LOCALE);
+    $('valor-ayuda').textContent = `Precio del menú: ${dinero(elegido.precio)}${cantidad > 1 ? ' c/u' : ''}`;
+  } else if (modoOtro) {
+    nombre.textContent = 'Otro (no está en el menú)'; nombre.className = 'elegido';
+    $('prod-flecha').textContent = 'Ver menú ›';
+    $('valor-ayuda').textContent = 'Escribe el valor total que te cobraron.';
+  } else {
+    nombre.textContent = 'Elegir del menú del hotel'; nombre.className = 'vacio-txt';
+    $('prod-flecha').textContent = 'Ver menú ›';
+    $('producto').value = ''; $('valor').value = '';
+    $('valor-ayuda').textContent = '';
+  }
+  renderReparto();
+}
+
+$('prod-btn').addEventListener('click', abrirMenu);
+$('cerrar-menu').addEventListener('click', cerrarMenu);
+$('modal-menu').addEventListener('click', e => { if (e.target.id === 'modal-menu') cerrarMenu(); });
+$('buscar-menu').addEventListener('input', renderMenu);
+$('cats-menu').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]'); if (!b) return;
+  catMenu = b.dataset.cat; renderMenu(); $('menu-lista').scrollTop = 0;
+});
+$('menu-lista').addEventListener('click', e => {
+  const b = e.target.closest('[data-i]'); if (!b) return;
+  elegido = MENU[Number(b.dataset.i)]; modoOtro = false;
+  cerrarMenu(); actualizarProducto();
+});
+$('btn-otro').addEventListener('click', () => {
+  elegido = null; modoOtro = true;
+  cerrarMenu(); $('producto').value = ''; $('valor').value = ''; actualizarProducto();
+  setTimeout(() => $('producto').focus(), 250);
+});
+
 function renderPersonas() {
   $('personas').innerHTML = PERSONAS.map(p => `
     <button type="button" class="persona ${seleccion.has(p.id) ? 'sel' : ''}" data-id="${p.id}" aria-pressed="${seleccion.has(p.id)}">
@@ -567,8 +704,8 @@ $('valor').addEventListener('input', e => {
   e.target.value = digitos ? Number(digitos).toLocaleString(CONFIG.LOCALE) : '';
   renderReparto();
 });
-$('menos').addEventListener('click', () => { cantidad = Math.max(1, cantidad - 1); $('cantidad').textContent = cantidad; });
-$('mas').addEventListener('click', () => { cantidad = Math.min(99, cantidad + 1); $('cantidad').textContent = cantidad; });
+$('menos').addEventListener('click', () => { cantidad = Math.max(1, cantidad - 1); $('cantidad').textContent = cantidad; if (elegido) actualizarProducto(); });
+$('mas').addEventListener('click', () => { cantidad = Math.min(99, cantidad + 1); $('cantidad').textContent = cantidad; if (elegido) actualizarProducto(); });
 
 /* ---------- Foto: se reduce en el celular antes de enviarla ---------- */
 function comprimirImagen(archivo, maxLado = 1280, calidad = 0.72) {
@@ -610,7 +747,8 @@ $('form').addEventListener('submit', async e => {
   e.preventDefault();
   const producto = $('producto').value.trim();
   const valor = valorActual();
-  if (!producto) { toast('Escribe el producto'); $('producto').focus(); return; }
+  if (!elegido && !modoOtro) { toast('Elige el producto del menú'); abrirMenu(); return; }
+  if (!producto) { toast('Escribe qué fue'); $('producto').focus(); return; }
   if (!valor) { toast('Escribe el valor'); $('valor').focus(); return; }
   if (!seleccion.size) { toast('Elige quién lo consumió'); return; }
   if (!pago) { toast('Elige quién pagó'); return; }
@@ -628,7 +766,7 @@ $('form').addEventListener('submit', async e => {
 
   // Limpiar formulario
   $('form').reset(); $('valor').value = ''; cantidad = 1; $('cantidad').textContent = '1';
-  seleccion = new Set(); pago = ''; renderPersonas(); quitarFoto();
+  seleccion = new Set(); pago = ''; elegido = null; modoOtro = false; actualizarProducto(); renderPersonas(); quitarFoto();
   document.activeElement?.blur();
 
   toast(navigator.onLine ? 'Guardando…' : 'Sin internet: se enviará luego');
@@ -875,7 +1013,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { si
 // Arranque
 $('aviso-config').hidden = apiConfigurada();
 renderPersonas();
+actualizarProducto();
 renderTodo();
+cargarMenuEnVivo();
 if (apiConfigurada()) { cargarRegistros(true); sincronizar(); }
 </script>
 </body>
